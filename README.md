@@ -17,3 +17,11 @@ docker compose down
 
 # Detener y eliminar volúmenes
 docker compose down -v
+
+# Levantar Todos Los Container
+chmod +x start-docker.sh
+./start-docker.sh
+
+# Actualizar todos los servicios
+chmod +x update.sh
+./update.sh
