@@ -16,7 +16,7 @@ services:
 
   base-api:
     container_name: "base-api"
-    image: ghcr.io/tef-austral/base-service:latest
+    image: ghcr.io/tef-austral/base-repo:latest
     ports:
       - 8000:8080
     environment:
@@ -46,7 +46,7 @@ services:
     networks:
       - app-network
 
-  formatter-service-api:
+  formatter-api:
     container_name: "formatter-service-api"
     image: ghcr.io/tef-austral/formatter-service:latest
     ports:
