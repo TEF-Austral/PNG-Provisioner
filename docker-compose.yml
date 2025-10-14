@@ -16,7 +16,7 @@ services:
 
   base-api:
     container_name: "base-api"
-    image: ghcr.io/tef-austral/base-service:latest
+    image: ghcr.io/tef-austral/base-api:latest
     ports:
       - 8000:8080
     environment:
@@ -48,7 +48,7 @@ services:
 
   formatter-service-api:
     container_name: "formatter-service-api"
-    image: ghcr.io/tef-austral/formatter-service:latest
+    image: ghcr.io/tef-austral/formatter-api:latest
     ports:
       - 8001:8080
     environment:
@@ -80,7 +80,7 @@ services:
 
   snippet-service-api:
     container_name: "snippet-service-api"
-    image: ghcr.io/tef-austral/snippet-service:latest
+    image: ghcr.io/tef-austral/snippet-api:latest
     ports:
       - 8002:8080
     environment:
@@ -112,7 +112,7 @@ services:
 
   execution-service-api:
     container_name: "execution-service-api"
-    image: ghcr.io/tef-austral/execution-service:latest
+    image: ghcr.io/tef-austral/execution-api:latest
     ports:
       - 8003:8080
     environment:
@@ -144,7 +144,7 @@ services:
 
   analyzer-service-api:
     container_name: "analyzer-service-api"
-    image: ghcr.io/tef-austral/analyzer-service:latest
+    image: ghcr.io/tef-austral/analyzer-api:latest
     ports:
       - 8004:8080
     environment:
@@ -176,7 +176,7 @@ services:
 
   authorization-service-api:
     container_name: "authorization-service-api"
-    image: ghcr.io/tef-austral/authorization-service:latest
+    image: ghcr.io/tef-austral/authorization-api:latest
     ports:
       - 8005:8080
     environment:
