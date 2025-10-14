@@ -16,13 +16,16 @@ services:
 
   base-api:
     container_name: "base-api"
-    build:
-      context: ./base
-      dockerfile: Dockerfile
+    image: ghcr.io/tef-austral/base-service:latest
     ports:
       - 8000:8080
-    env_file:
-      - ./base/.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_BASE}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_BASE}
+      POSTGRES_DB: ${POSTGRES_DB_BASE}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://base-db:5432/${POSTGRES_DB_BASE}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_BASE}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_BASE}
     depends_on:
       - base-db
     networks:
@@ -48,8 +51,13 @@ services:
     image: ghcr.io/tef-austral/echo:latest
     ports:
       - 8001:8080
-    env_file:
-      - ./formatter/.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_FORMATTER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_FORMATTER}
+      POSTGRES_DB: ${POSTGRES_DB_FORMATTER}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://formatter-db:5432/${POSTGRES_DB_FORMATTER}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_FORMATTER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_FORMATTER}
     depends_on:
       - formatter-db
     networks:
@@ -72,13 +80,16 @@ services:
 
   snippet-service-api:
     container_name: "snippet-service-api"
-    build:
-      context: ./snippet-service
-      dockerfile: Dockerfile.multi
+    image: ghcr.io/tef-austral/snippet-service:latest
     ports:
       - 8002:8080
-    env_file:
-      - ./snippet-service/.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_SNIPPET}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
+      POSTGRES_DB: ${POSTGRES_DB_SNIPPET}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://snippet-service-db:5432/${POSTGRES_DB_SNIPPET}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
     depends_on:
       - snippet-service-db
     networks:
@@ -101,13 +112,16 @@ services:
 
   execution-service-api:
     container_name: "execution-service-api"
-    build:
-      context: ./execution-service
-      dockerfile: Dockerfile.multi
+    image: ghcr.io/tef-austral/execution-service:latest
     ports:
       - 8003:8080
-    env_file:
-      - ./execution-service/.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_EXECUTION}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_EXECUTION}
+      POSTGRES_DB: ${POSTGRES_DB_EXECUTION}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://execution-db:5432/${POSTGRES_DB_EXECUTION}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_EXECUTION}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_EXECUTION}
     depends_on:
       - execution-db
     networks:
@@ -130,13 +144,16 @@ services:
 
   analyzer-service-api:
     container_name: "analyzer-service-api"
-    build:
-      context: ./analyzer-service
-      dockerfile: Dockerfile.multi
+    image: ghcr.io/tef-austral/analyzer-service:latest
     ports:
       - 8004:8080
-    env_file:
-      - ./analyzer-service/.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_ANALYZER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_ANALYZER}
+      POSTGRES_DB: ${POSTGRES_DB_ANALYZER}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://analyzer-db:5432/${POSTGRES_DB_ANALYZER}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_ANALYZER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_ANALYZER}
     depends_on:
       - analyzer-db
     networks:
@@ -158,27 +175,4 @@ services:
       - app-network
 
   authorization-service-api:
-    container_name: "authorization-service-api"
-    build:
-      context: ./authorization-service
-      dockerfile: Dockerfile.multi
-    ports:
-      - 8005:8080
-    env_file:
-      - ./authorization-service/.env
-    depends_on:
-      - authorization-db
-    networks:
-      - app-network
-
-volumes:
-  base_data:
-  formatter_data:
-  snippet_data:
-  execution_data:
-  analyzer_data:
-  authorization_data:
-
-networks:
-  app-network:
-    driver: bridge
+    container_name: "authorizat
