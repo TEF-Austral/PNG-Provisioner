@@ -46,7 +46,7 @@ services:
     networks:
       - app-network
 
-  formatter-api:
+  formatter-service-api:
     container_name: "formatter-service-api"
     image: ghcr.io/tef-austral/formatter-service:latest
     ports:
