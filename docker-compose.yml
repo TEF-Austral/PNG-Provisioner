@@ -1,0 +1,184 @@
+services:
+  # === BASE SERVICE ===
+  base-db:
+    image: postgres:16
+    container_name: base_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_BASE}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_BASE}
+      POSTGRES_DB: ${POSTGRES_DB_BASE}
+    ports:
+      - 5432:5432
+    volumes:
+      - base_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  base-api:
+    container_name: "base-api"
+    build:
+      context: ./base
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8080
+    env_file:
+      - ./base/.env
+    depends_on:
+      - base-db
+    networks:
+      - app-network
+
+  # === FORMATTER SERVICE ===
+  formatter-db:
+    image: postgres:16
+    container_name: formatter_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_FORMATTER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_FORMATTER}
+      POSTGRES_DB: ${POSTGRES_DB_FORMATTER}
+    ports:
+      - 5433:5432
+    volumes:
+      - formatter_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  formatter-api:
+    container_name: "formatter-service-api"
+    image: ghcr.io/tef-austral/echo:latest
+    ports:
+      - 8001:8080
+    env_file:
+      - ./formatter/.env
+    depends_on:
+      - formatter-db
+    networks:
+      - app-network
+
+  # === SNIPPET SERVICE ===
+  snippet-service-db:
+    image: postgres:16
+    container_name: snippet_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_SNIPPET}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
+      POSTGRES_DB: ${POSTGRES_DB_SNIPPET}
+    ports:
+      - 5434:5432
+    volumes:
+      - snippet_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  snippet-service-api:
+    container_name: "snippet-service-api"
+    build:
+      context: ./snippet-service
+      dockerfile: Dockerfile.multi
+    ports:
+      - 8002:8080
+    env_file:
+      - ./snippet-service/.env
+    depends_on:
+      - snippet-service-db
+    networks:
+      - app-network
+
+  # === EXECUTION SERVICE ===
+  execution-db:
+    image: postgres:16
+    container_name: execution_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_EXECUTION}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_EXECUTION}
+      POSTGRES_DB: ${POSTGRES_DB_EXECUTION}
+    ports:
+      - 5435:5432
+    volumes:
+      - execution_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  execution-service-api:
+    container_name: "execution-service-api"
+    build:
+      context: ./execution-service
+      dockerfile: Dockerfile.multi
+    ports:
+      - 8003:8080
+    env_file:
+      - ./execution-service/.env
+    depends_on:
+      - execution-db
+    networks:
+      - app-network
+
+  # === ANALYZER SERVICE ===
+  analyzer-db:
+    image: postgres:16
+    container_name: analyzer_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_ANALYZER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_ANALYZER}
+      POSTGRES_DB: ${POSTGRES_DB_ANALYZER}
+    ports:
+      - 5436:5432
+    volumes:
+      - analyzer_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  analyzer-service-api:
+    container_name: "analyzer-service-api"
+    build:
+      context: ./analyzer-service
+      dockerfile: Dockerfile.multi
+    ports:
+      - 8004:8080
+    env_file:
+      - ./analyzer-service/.env
+    depends_on:
+      - analyzer-db
+    networks:
+      - app-network
+
+  # === AUTHORIZATION SERVICE ===
+  authorization-db:
+    image: postgres:16
+    container_name: authorization_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_AUTHORIZATION}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_AUTHORIZATION}
+      POSTGRES_DB: ${POSTGRES_DB_AUTHORIZATION}
+    ports:
+      - 5437:5432
+    volumes:
+      - authorization_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  authorization-service-api:
+    container_name: "authorization-service-api"
+    build:
+      context: ./authorization-service
+      dockerfile: Dockerfile.multi
+    ports:
+      - 8005:8080
+    env_file:
+      - ./authorization-service/.env
+    depends_on:
+      - authorization-db
+    networks:
+      - app-network
+
+volumes:
+  base_data:
+  formatter_data:
+  snippet_data:
+  execution_data:
+  analyzer_data:
+  authorization_data:
+
+networks:
+  app-network:
+    driver: bridge
