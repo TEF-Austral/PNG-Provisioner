@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  png-provisioner:
+    image: ghcr.io/tef-austral/png-provisioner:latest
+    container_name: png-provisioner
+    # Uncomment to run with a custom command
+    # command: bash
+    # volumes:
+    #   - ./data:/app/data
+    # ports:
+    #   - "8080:8080"

@@ -1,0 +1,16 @@
+# Example: Custom Application Dockerfile
+
+# You can create custom Dockerfiles based on the base PNG-Provisioner image:
+
+FROM ghcr.io/tef-austral/png-provisioner:latest
+
+# Add your custom tools or dependencies
+RUN apk add --no-cache \
+    python3 \
+    py3-pip
+
+# Copy your application files
+# COPY ./app /app/myapp
+
+# Set custom entrypoint or command
+# ENTRYPOINT ["/app/myapp/start.sh"]
