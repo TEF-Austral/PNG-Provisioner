@@ -16,7 +16,7 @@ services:
 
   base-api:
     container_name: "base-api"
-    image: ghcr.io/tef-austral/base-service:latest
+    image: ghcr.io/tef-austral/base-service:latest  # ✅ Imagen pre-built
     ports:
       - 8000:8080
     environment:
@@ -24,8 +24,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_BASE}
       POSTGRES_DB: ${POSTGRES_DB_BASE}
       SPRING_DATASOURCE_URL: jdbc:postgresql://base-db:5432/${POSTGRES_DB_BASE}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_BASE}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_BASE}
     depends_on:
       - base-db
     networks:
@@ -56,8 +54,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_FORMATTER}
       POSTGRES_DB: ${POSTGRES_DB_FORMATTER}
       SPRING_DATASOURCE_URL: jdbc:postgresql://formatter-db:5432/${POSTGRES_DB_FORMATTER}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_FORMATTER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_FORMATTER}
     depends_on:
       - formatter-db
     networks:
@@ -80,7 +76,7 @@ services:
 
   snippet-service-api:
     container_name: "snippet-service-api"
-    image: ghcr.io/tef-austral/snippet-service:latest
+    image: ghcr.io/tef-austral/snippet-service:latest  # ✅ Cambiar a imagen
     ports:
       - 8002:8080
     environment:
@@ -88,8 +84,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
       POSTGRES_DB: ${POSTGRES_DB_SNIPPET}
       SPRING_DATASOURCE_URL: jdbc:postgresql://snippet-service-db:5432/${POSTGRES_DB_SNIPPET}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
     depends_on:
       - snippet-service-db
     networks:
@@ -112,7 +106,7 @@ services:
 
   execution-service-api:
     container_name: "execution-service-api"
-    image: ghcr.io/tef-austral/execution-service:latest
+    image: ghcr.io/tef-austral/execution-service:latest  # ✅ Cambiar a imagen
     ports:
       - 8003:8080
     environment:
@@ -120,8 +114,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_EXECUTION}
       POSTGRES_DB: ${POSTGRES_DB_EXECUTION}
       SPRING_DATASOURCE_URL: jdbc:postgresql://execution-db:5432/${POSTGRES_DB_EXECUTION}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_EXECUTION}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_EXECUTION}
     depends_on:
       - execution-db
     networks:
@@ -144,7 +136,7 @@ services:
 
   analyzer-service-api:
     container_name: "analyzer-service-api"
-    image: ghcr.io/tef-austral/analyzer-service:latest
+    image: ghcr.io/tef-austral/analyzer-service:latest  # ✅ Cambiar a imagen
     ports:
       - 8004:8080
     environment:
@@ -152,8 +144,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_ANALYZER}
       POSTGRES_DB: ${POSTGRES_DB_ANALYZER}
       SPRING_DATASOURCE_URL: jdbc:postgresql://analyzer-db:5432/${POSTGRES_DB_ANALYZER}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_ANALYZER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_ANALYZER}
     depends_on:
       - analyzer-db
     networks:
@@ -175,4 +165,28 @@ services:
       - app-network
 
   authorization-service-api:
-    container_name: "authorizat
+    container_name: "authorization-service-api"
+    image: ghcr.io/tef-austral/authorization-service:latest  # ✅ Cambiar a imagen
+    ports:
+      - 8005:8080
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_AUTHORIZATION}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_AUTHORIZATION}
+      POSTGRES_DB: ${POSTGRES_DB_AUTHORIZATION}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://authorization-db:5432/${POSTGRES_DB_AUTHORIZATION}
+    depends_on:
+      - authorization-db
+    networks:
+      - app-network
+
+volumes:
+  base_data:
+  formatter_data:
+  snippet_data:
+  execution_data:
+  analyzer_data:
+  authorization_data:
+
+networks:
+  app-network:
+    driver: bridge
