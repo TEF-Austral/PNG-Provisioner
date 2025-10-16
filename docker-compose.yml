@@ -191,7 +191,7 @@ services:
     networks:
       - app-network
 
-  # === AUTHENTICATION SERVICE ===
+    # === AUTHENTICATION SERVICE (con Auth0) ===
   authentication-db:
     image: postgres:16
     container_name: authentication_db
@@ -212,16 +212,23 @@ services:
     ports:
       - 8006:8080
     environment:
+      # Database (si lo usas)
       POSTGRES_USER: ${POSTGRES_USER_AUTHENTICATION}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_AUTHENTICATION}
       POSTGRES_DB: ${POSTGRES_DB_AUTHENTICATION}
       SPRING_DATASOURCE_URL: jdbc:postgresql://authentication-db:5432/${POSTGRES_DB_AUTHENTICATION}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_AUTHENTICATION}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_AUTHENTICATION}
+
+      # Auth0 Configuration (NUEVO)
+      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      SPRING_PROFILES_ACTIVE: production
     depends_on:
       - authentication-db
     networks:
       - app-network
+
 
 volumes:
   base_data:
