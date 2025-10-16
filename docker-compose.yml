@@ -191,6 +191,38 @@ services:
     networks:
       - app-network
 
+  # === AUTHENTICATION SERVICE ===
+  authentication-db:
+    image: postgres:16
+    container_name: authentication_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_AUTHENTICATION}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_AUTHENTICATION}
+      POSTGRES_DB: ${POSTGRES_DB_AUTHENTICATION}
+    ports:
+      - 5438:5432
+    volumes:
+      - authentication_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  authentication-service-api:
+    container_name: "authentication-service-api"
+    image: ghcr.io/tef-austral/authentication-service:latest
+    ports:
+      - 8006:8080
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_AUTHENTICATION}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_AUTHENTICATION}
+      POSTGRES_DB: ${POSTGRES_DB_AUTHENTICATION}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://authentication-db:5432/${POSTGRES_DB_AUTHENTICATION}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_AUTHENTICATION}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_AUTHENTICATION}
+    depends_on:
+      - authentication-db
+    networks:
+      - app-network
+
 volumes:
   base_data:
   formatter_data:
@@ -198,6 +230,7 @@ volumes:
   execution_data:
   analyzer_data:
   authorization_data:
+  authentication_data:
 
 networks:
   app-network:
