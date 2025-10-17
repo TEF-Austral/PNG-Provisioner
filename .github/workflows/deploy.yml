@@ -36,7 +36,8 @@ jobs:
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
-            cd ~/provisioner
+            cd ~/PNG-Provisioner
+            
             
             echo "🚀 DEPLOYMENT INFO"
             echo "Service: ${{ steps.info.outputs.service }}"
