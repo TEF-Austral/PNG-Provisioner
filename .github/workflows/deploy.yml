@@ -1,0 +1,69 @@
+name: Deploy to VM
+
+on:
+  repository_dispatch:
+    types: [service_updated]
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy ("all" or service name)'
+        required: false
+        default: 'all'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Get deployment info
+        id: info
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "service=${{ github.event.client_payload.service }}" >> $GITHUB_OUTPUT
+            echo "version=${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
+            echo "sha=${{ github.event.client_payload.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "service=${{ github.event.inputs.service }}" >> $GITHUB_OUTPUT
+            echo "version=latest" >> $GITHUB_OUTPUT
+            echo "sha=manual" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to VM
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/provisioner
+            
+            echo "🚀 DEPLOYMENT INFO"
+            echo "Service: ${{ steps.info.outputs.service }}"
+            echo "Version: ${{ steps.info.outputs.version }}"
+            echo "SHA: ${{ steps.info.outputs.sha }}"
+            echo ""
+            
+            # Update provisioner repo
+            git pull origin main
+            
+            # Login to GHCR
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Deploy
+            if [ "${{ steps.info.outputs.service }}" = "all" ]; then
+              docker compose pull
+              docker compose up -d
+            else
+              docker compose pull ${{ steps.info.outputs.service }}-api
+              docker compose up -d ${{ steps.info.outputs.service }}-api
+            fi
+            
+            # Cleanup
+            docker image prune -f
+            
+            # Status
+            echo ""
+            docker compose ps
+            echo ""
+            echo "✅ Deployment completed!"
