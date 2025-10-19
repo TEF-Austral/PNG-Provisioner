@@ -16,7 +16,6 @@ on:
 jobs:
   deploy-prod:
     runs-on: ubuntu-latest
-    environment: production  # Requiere approval si lo configurás
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.client_payload.environment == 'prod'
 
     steps:
