@@ -36,10 +36,10 @@ jobs:
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DEV_VM_HOST }}
-          username: ${{ secrets.DEV_VM_USER }}
+          username: ${{ secrets.VM_USER }}
           key: ${{ secrets.DEV_VM_SSH_KEY }}
           script: |
-            cd ~/PNG-Provisioner/dev
+            cd ~/PNG-Provisioner
             
             echo "🚀 DEPLOYMENT INFO (DEV)"
             echo "Service: ${{ steps.info.outputs.service }}"
@@ -50,7 +50,6 @@ jobs:
             # Update provisioner repo
             cd ~/PNG-Provisioner
             git pull origin main
-            cd ~/PNG-Provisioner/dev
             
             # Login to GHCR
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin

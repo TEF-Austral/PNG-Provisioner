@@ -40,7 +40,7 @@ jobs:
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
-            cd ~/PNG-Provisioner/prod
+            cd ~/PNG-Provisioner
             
             echo "🚀 DEPLOYMENT INFO (PROD)"
             echo "Service: ${{ steps.info.outputs.service }}"
@@ -51,7 +51,6 @@ jobs:
             # Update provisioner repo
             cd ~/PNG-Provisioner
             git pull origin main
-            cd ~/PNG-Provisioner/prod
             
             # Login to GHCR
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin

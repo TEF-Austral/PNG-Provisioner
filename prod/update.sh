@@ -8,7 +8,6 @@ echo ""
 
 cd ~/PNG-Provisioner
 git pull origin main
-cd ~/PNG-Provisioner/prod
 
 echo "🔐 Login to GHCR..."
 echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
