@@ -1,0 +1,74 @@
+name: Deploy to Development VM
+
+on:
+  repository_dispatch:
+    types: [service_updated]
+  push:
+    paths:
+      - 'dev/**'
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy ("all" or service name)'
+        required: false
+        default: 'all'
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.client_payload.environment == 'dev'
+
+    steps:
+      - name: Get deployment info
+        id: info
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "service=${{ github.event.client_payload.service }}" >> $GITHUB_OUTPUT
+            echo "version=${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
+            echo "environment=${{ github.event.client_payload.environment }}" >> $GITHUB_OUTPUT
+          else
+            echo "service=${{ github.event.inputs.service || 'all' }}" >> $GITHUB_OUTPUT
+            echo "version=dev" >> $GITHUB_OUTPUT
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to Dev VM
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DEV_VM_HOST }}
+          username: ${{ secrets.DEV_VM_USER }}
+          key: ${{ secrets.DEV_VM_SSH_KEY }}
+          script: |
+            cd ~/PNG-Provisioner/dev
+            
+            echo "🚀 DEPLOYMENT INFO (DEV)"
+            echo "Service: ${{ steps.info.outputs.service }}"
+            echo "Version: ${{ steps.info.outputs.version }}"
+            echo "Environment: dev"
+            echo ""
+            
+            # Update provisioner repo
+            cd ~/PNG-Provisioner
+            git pull origin main
+            cd ~/PNG-Provisioner/dev
+            
+            # Login to GHCR
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Deploy
+            if [ "${{ steps.info.outputs.service }}" = "all" ]; then
+              docker compose pull
+              docker compose up -d --remove-orphans
+            else
+              docker compose pull ${{ steps.info.outputs.service }}-api
+              docker compose up -d ${{ steps.info.outputs.service }}-api
+            fi
+            
+            # Cleanup
+            docker image prune -f
+            
+            # Status
+            echo ""
+            docker compose ps
+            echo ""
+            echo "✅ Dev deployment completed!"

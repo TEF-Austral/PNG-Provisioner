@@ -1,0 +1,75 @@
+name: Deploy to Production VM
+
+on:
+  repository_dispatch:
+    types: [ service_updated ]
+  push:
+    paths:
+      - 'prod/**'
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy ("all" or service name)'
+        required: false
+        default: 'all'
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    environment: production  # Requiere approval si lo configurás
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.client_payload.environment == 'prod'
+
+    steps:
+      - name: Get deployment info
+        id: info
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "service=${{ github.event.client_payload.service }}" >> $GITHUB_OUTPUT
+            echo "version=${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
+            echo "environment=${{ github.event.client_payload.environment }}" >> $GITHUB_OUTPUT
+          else
+            echo "service=${{ github.event.inputs.service || 'all' }}" >> $GITHUB_OUTPUT
+            echo "version=latest" >> $GITHUB_OUTPUT
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to Prod VM
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PROD_VM_HOST }}
+          username: ${{ secrets.PROD_VM_USER }}
+          key: ${{ secrets.PROD_VM_SSH_KEY }}
+          script: |
+            cd ~/PNG-Provisioner/prod
+            
+            echo "🚀 DEPLOYMENT INFO (PROD)"
+            echo "Service: ${{ steps.info.outputs.service }}"
+            echo "Version: ${{ steps.info.outputs.version }}"
+            echo "Environment: prod"
+            echo ""
+            
+            # Update provisioner repo
+            cd ~/PNG-Provisioner
+            git pull origin main
+            cd ~/PNG-Provisioner/prod
+            
+            # Login to GHCR
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Deploy
+            if [ "${{ steps.info.outputs.service }}" = "all" ]; then
+              docker compose pull
+              docker compose up -d --remove-orphans
+            else
+              docker compose pull ${{ steps.info.outputs.service }}-api
+              docker compose up -d ${{ steps.info.outputs.service }}-api
+            fi
+            
+            # Cleanup
+            docker image prune -f
+            
+            # Status
+            echo ""
+            docker compose ps
+            echo ""
+            echo "✅ Production deployment completed!"
