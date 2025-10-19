@@ -1,11 +1,11 @@
-name: Deploy to Development VM
+name: Deploy to Production VM
 
 on:
   repository_dispatch:
-    types: [service_updated]
+    types: [ service_updated ]
   push:
     paths:
-      - 'dev/**'
+      - 'prod/**'
   workflow_dispatch:
     inputs:
       service:
@@ -14,42 +14,52 @@ on:
         default: 'all'
 
 jobs:
-  deploy-dev:
+  deploy-prod:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.client_payload.environment == 'dev'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.client_payload.environment == 'prod'
 
     steps:
       - name: Get deployment info
         id: info
         run: |
           if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
-            echo "service=${{ github.event.client_payload.service }}" >> $GITHUB_OUTPUT
+            # Convertir a minúsculas para coincidir con docker-compose
+            SERVICE=$(echo "${{ github.event.client_payload.service }}" | tr '[:upper:]' '[:lower:]')
+          
+            echo "service=$SERVICE" >> $GITHUB_OUTPUT
             echo "version=${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
             echo "environment=${{ github.event.client_payload.environment }}" >> $GITHUB_OUTPUT
           else
-            echo "service=${{ github.event.inputs.service || 'all' }}" >> $GITHUB_OUTPUT
-            echo "version=dev" >> $GITHUB_OUTPUT
-            echo "environment=dev" >> $GITHUB_OUTPUT
+            # Convertir a minúsculas también para workflow_dispatch
+            SERVICE=$(echo "${{ github.event.inputs.service || 'all' }}" | tr '[:upper:]' '[:lower:]')
+          
+            echo "service=$SERVICE" >> $GITHUB_OUTPUT
+            echo "version=latest" >> $GITHUB_OUTPUT
+            echo "environment=prod" >> $GITHUB_OUTPUT
           fi
 
-      - name: Deploy to Dev VM
+      - name: Deploy to Prod VM
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.DEV_VM_HOST }}
+          host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.DEV_VM_SSH_KEY }}
+          key: ${{ secrets.VM_SSH_KEY }}
           script: |
             cd ~/PNG-Provisioner
             
-            echo "🚀 DEPLOYMENT INFO (DEV)"
+            echo "🚀 DEPLOYMENT INFO (PROD)"
             echo "Service: ${{ steps.info.outputs.service }}"
             echo "Version: ${{ steps.info.outputs.version }}"
-            echo "Environment: dev"
+            echo "Environment: prod"
             echo ""
             
             # Update provisioner repo
-            cd ~/PNG-Provisioner
             git pull origin main
+            
+            # Copy prod docker-compose if it changed
+            if [ -f prod/docker-compose.yml ]; then
+              cp prod/docker-compose.yml docker-compose.yml
+            fi
             
             # Login to GHCR
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -70,4 +80,4 @@ jobs:
             echo ""
             docker compose ps
             echo ""
-            echo "✅ Dev deployment completed!"
+            echo "✅ Production deployment completed!"
