@@ -46,6 +46,8 @@ services:
   base-api:
     container_name: base-api-prod
     image: ghcr.io/tef-austral/base-repo:latest
+    ports:
+      - 8000:8080
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://base-db:5432/${POSTGRES_DB_BASE}
