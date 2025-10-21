@@ -86,6 +86,8 @@ services:
   formatter-service-api:
     container_name: formatter-service-api-prod
     image: ghcr.io/tef-austral/formatter-service:latest
+    ports:
+      - 8001:8080
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://formatter-db:5432/${POSTGRES_DB_FORMATTER}
@@ -124,6 +126,8 @@ services:
   snippet-service-api:
     container_name: snippet-service-api-prod
     image: ghcr.io/tef-austral/snippet-service:latest
+    ports:
+      - 8002:8080
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://snippet-service-db:5432/${POSTGRES_DB_SNIPPET}
@@ -162,6 +166,8 @@ services:
   execution-service-api:
     container_name: execution-service-api-prod
     image: ghcr.io/tef-austral/execution-service:latest
+    ports:
+      - 8003:8080
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://execution-db:5432/${POSTGRES_DB_EXECUTION}
@@ -200,6 +206,8 @@ services:
   analyzer-service-api:
     container_name: analyzer-service-api-prod
     image: ghcr.io/tef-austral/analyzer-service:latest
+    ports:
+      - 8004:8080
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://analyzer-db:5432/${POSTGRES_DB_ANALYZER}
@@ -238,6 +246,8 @@ services:
   authorization-service-api:
     container_name: authorization-service-api-prod
     image: ghcr.io/tef-austral/authorization-service:latest
+    ports:
+      - 8005:8080
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://authorization-db:5432/${POSTGRES_DB_AUTHORIZATION}
@@ -276,6 +286,8 @@ services:
   authentication-service-api:
     container_name: authentication-service-api-prod
     image: ghcr.io/tef-austral/authentication-service:latest
+    ports:
+      - 8006:8080
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://authentication-db:5432/${POSTGRES_DB_AUTHENTICATION}
