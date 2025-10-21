@@ -1,8 +1,11 @@
-name: Deploy to VM
+name: Deploy to Development VM
 
 on:
   repository_dispatch:
-    types: [service_updated]
+    types: [ service_updated ]
+  push:
+    paths:
+      - 'dev/**'
   workflow_dispatch:
     inputs:
       service:
@@ -11,42 +14,52 @@ on:
         default: 'all'
 
 jobs:
-  deploy:
+  deploy-dev:
     runs-on: ubuntu-latest
-    environment: production
-    
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.client_payload.environment == 'dev'
+
     steps:
       - name: Get deployment info
         id: info
         run: |
           if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
-            echo "service=${{ github.event.client_payload.service }}" >> $GITHUB_OUTPUT
+            # Convertir a minúsculas para coincidir con docker-compose
+            SERVICE=$(echo "${{ github.event.client_payload.service }}" | tr '[:upper:]' '[:lower:]')
+          
+            echo "service=$SERVICE" >> $GITHUB_OUTPUT
             echo "version=${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
-            echo "sha=${{ github.event.client_payload.sha }}" >> $GITHUB_OUTPUT
+            echo "environment=${{ github.event.client_payload.environment }}" >> $GITHUB_OUTPUT
           else
-            echo "service=${{ github.event.inputs.service }}" >> $GITHUB_OUTPUT
-            echo "version=latest" >> $GITHUB_OUTPUT
-            echo "sha=manual" >> $GITHUB_OUTPUT
+            # Convertir a minúsculas también para workflow_dispatch
+            SERVICE=$(echo "${{ github.event.inputs.service || 'all' }}" | tr '[:upper:]' '[:lower:]')
+          
+            echo "service=$SERVICE" >> $GITHUB_OUTPUT
+            echo "version=dev" >> $GITHUB_OUTPUT
+            echo "environment=dev" >> $GITHUB_OUTPUT
           fi
 
-      - name: Deploy to VM
+      - name: Deploy to Dev VM
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.VM_HOST }}
+          host: ${{ secrets.DEV_VM_HOST }}
           username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.VM_SSH_KEY }}
+          key: ${{ secrets.DEV_VM_SSH_KEY }}
           script: |
             cd ~/PNG-Provisioner
             
-            
-            echo "🚀 DEPLOYMENT INFO"
+            echo "🚀 DEPLOYMENT INFO (DEV)"
             echo "Service: ${{ steps.info.outputs.service }}"
             echo "Version: ${{ steps.info.outputs.version }}"
-            echo "SHA: ${{ steps.info.outputs.sha }}"
+            echo "Environment: dev"
             echo ""
             
             # Update provisioner repo
             git pull origin main
+            
+            # Copy dev docker-compose if it changed
+            if [ -f dev/docker-compose.yml ]; then
+              cp dev/docker-compose.yml docker-compose.yml
+            fi
             
             # Login to GHCR
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -54,7 +67,7 @@ jobs:
             # Deploy
             if [ "${{ steps.info.outputs.service }}" = "all" ]; then
               docker compose pull
-              docker compose up -d
+              docker compose up -d --remove-orphans
             else
               docker compose pull ${{ steps.info.outputs.service }}-api
               docker compose up -d ${{ steps.info.outputs.service }}-api
@@ -67,4 +80,4 @@ jobs:
             echo ""
             docker compose ps
             echo ""
-            echo "✅ Deployment completed!"
+            echo "✅ Dev deployment completed!"

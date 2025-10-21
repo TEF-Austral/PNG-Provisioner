@@ -1,5 +1,11 @@
 # PNG-Provisioner
 
+# Conectarse a la Vm de Prod
+ssh -i "TEF-INGSIS_key2.pem" tef@20.200.120.244
+
+# Conectarse a la Vm de Dev
+ssh -i "TEF-INGSIS-DEV_key.pem" tef@4.204.56.246
+
 # Levantar todos los servicios
 docker compose up -d
 

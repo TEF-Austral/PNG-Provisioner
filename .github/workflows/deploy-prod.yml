@@ -1,0 +1,83 @@
+name: Deploy to Production VM
+
+on:
+  repository_dispatch:
+    types: [ service_updated ]
+  push:
+    paths:
+      - 'prod/**'
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy ("all" or service name)'
+        required: false
+        default: 'all'
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.client_payload.environment == 'prod'
+
+    steps:
+      - name: Get deployment info
+        id: info
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            # Convertir a minúsculas para coincidir con docker-compose
+            SERVICE=$(echo "${{ github.event.client_payload.service }}" | tr '[:upper:]' '[:lower:]')
+          
+            echo "service=$SERVICE" >> $GITHUB_OUTPUT
+            echo "version=${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
+            echo "environment=${{ github.event.client_payload.environment }}" >> $GITHUB_OUTPUT
+          else
+            # Convertir a minúsculas también para workflow_dispatch
+            SERVICE=$(echo "${{ github.event.inputs.service || 'all' }}" | tr '[:upper:]' '[:lower:]')
+          
+            echo "service=$SERVICE" >> $GITHUB_OUTPUT
+            echo "version=latest" >> $GITHUB_OUTPUT
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to Prod VM
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/PNG-Provisioner
+            
+            echo "🚀 DEPLOYMENT INFO (PROD)"
+            echo "Service: ${{ steps.info.outputs.service }}"
+            echo "Version: ${{ steps.info.outputs.version }}"
+            echo "Environment: prod"
+            echo ""
+            
+            # Update provisioner repo
+            git pull origin main
+            
+            # Copy prod docker-compose if it changed
+            if [ -f prod/docker-compose.yml ]; then
+              cp prod/docker-compose.yml docker-compose.yml
+            fi
+            
+            # Login to GHCR
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Deploy
+            if [ "${{ steps.info.outputs.service }}" = "all" ]; then
+              docker compose pull
+              docker compose up -d --remove-orphans
+            else
+              docker compose pull ${{ steps.info.outputs.service }}-api
+              docker compose up -d ${{ steps.info.outputs.service }}-api
+            fi
+            
+            # Cleanup
+            docker image prune -f
+            
+            # Status
+            echo ""
+            docker compose ps
+            echo ""
+            echo "✅ Production deployment completed!"
