@@ -1,4 +1,5 @@
 #!/bin/bash
+cd ~/PNG-Provisioner
 set -a
 source .env
 set +a
@@ -6,7 +7,6 @@ set +a
 echo "🔄 Updating DEV environment..."
 echo ""
 
-cd ~/PNG-Provisioner
 git pull origin main
 
 echo "🔐 Login to GHCR..."
