@@ -22,7 +22,10 @@ AUTH0_DOMAIN="${AUTH0_DOMAIN:?ENV AUTH0_DOMAIN is required}"
 CLIENT_ID="${AUTH0_MGMT_CLIENT_ID:-${AUTH0_CLIENT_ID:-}}"
 CLIENT_SECRET="${AUTH0_MGMT_CLIENT_SECRET:-${AUTH0_CLIENT_SECRET:-}}"
 AUDIENCE="${AUTH0_AUDIENCE:-${AUDIENCE:-}}"
-BASE_AUTH_URL="http://localhost:8006"
+
+# Base URL - change this to your Azure VM public IP
+# Example: BASE_AUTH_URL="http://20.123.45.67/api/auth"
+BASE_AUTH_URL="${BASE_AUTH_URL:-http://localhost/api/auth}"
 
 missing=()
 [[ -z "${CLIENT_ID}" ]] && missing+=("AUTH0_MGMT_CLIENT_ID")
@@ -33,6 +36,8 @@ if (( ${#missing[@]} > 0 )); then
   exit 1
 fi
 
+echo "=== Testing endpoints at: ${BASE_AUTH_URL} ==="
+echo ""
 echo "=== Getting Access Token from Auth0 ==="
 TOKEN_RESPONSE=$(curl -s --request POST \
   --url "https://${AUTH0_DOMAIN}/oauth/token" \
