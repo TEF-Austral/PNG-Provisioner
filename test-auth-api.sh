@@ -17,12 +17,12 @@ else
   exit 1
 fi
 
-# Map \& validate required variables from .env
+# Map & validate required variables from .env
 AUTH0_DOMAIN="${AUTH0_DOMAIN:?ENV AUTH0_DOMAIN is required}"
 CLIENT_ID="${AUTH0_MGMT_CLIENT_ID:-${AUTH0_CLIENT_ID:-}}"
 CLIENT_SECRET="${AUTH0_MGMT_CLIENT_SECRET:-${AUTH0_CLIENT_SECRET:-}}"
 AUDIENCE="${AUTH0_AUDIENCE:-${AUDIENCE:-}}"
-BASE_URL="${BASE_URL:-http://localhost:8006}"
+BASE_AUTH_URL="${BASE_AUTH_URL:?ENV BASE_AUTH_URL is required}"
 
 missing=()
 [[ -z "${CLIENT_ID}" ]] && missing+=("AUTH0_MGMT_CLIENT_ID")
@@ -57,32 +57,32 @@ echo "Token: ${TOKEN:0:50}..."
 echo ""
 
 echo "=== Test 1: Health Check (No Auth) ==="
-curl -s "${BASE_URL}/" && echo -e "\n"
+curl -s "${BASE_AUTH_URL}/" && echo -e "\n"
 
 echo "=== Test 2: Get JWT Token Value ==="
-curl -s "${BASE_URL}/jwt" \
+curl -s "${BASE_AUTH_URL}/jwt" \
   -H "Authorization: Bearer ${TOKEN}" && echo -e "\n"
 
 echo "=== Test 3: Get All Snippets ==="
-curl -s "${BASE_URL}/snippets" \
+curl -s "${BASE_AUTH_URL}/snippets" \
   -H "Authorization: Bearer ${TOKEN}" && echo -e "\n"
 
 echo "=== Test 4: Get Single Snippet ==="
-curl -s "${BASE_URL}/snippets/test-123" \
+curl -s "${BASE_AUTH_URL}/snippets/test-123" \
   -H "Authorization: Bearer ${TOKEN}" && echo -e "\n"
 
 echo "=== Test 5: Create Snippet ==="
-curl -s -X POST "${BASE_URL}/snippets" \
+curl -s -X POST "${BASE_AUTH_URL}/snippets" \
   -H "Authorization: Bearer ${TOKEN}" \
   -H "Content-Type: application/json" \
   -d '"This is my test snippet content"' && echo -e "\n"
 
 echo "=== Test 6: Get All Users ==="
-curl -s "${BASE_URL}/users" \
+curl -s "${BASE_AUTH_URL}/users" \
   -H "Authorization: Bearer ${TOKEN}" && echo -e "\n"
 
 echo "=== Test 7: Create New User ==="
-curl -s -X POST "${BASE_URL}/users" \
+curl -s -X POST "${BASE_AUTH_URL}/users" \
   -H "Authorization: Bearer ${TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
