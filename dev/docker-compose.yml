@@ -2,21 +2,19 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: nginx-proxy-dev # Nombre específico para dev
+    container_name: nginx-proxy-dev
     ports:
-      - "80:80" # Mapea el puerto 80 del host al 80 del contenedor
+      - "80:80"
     volumes:
-      # Monta tu configuración de nginx (asegúrate que los upstreams apunten a los nombres de servicio de dev)
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-dev.conf:/etc/nginx/nginx.conf:ro  # Usar nginx-dev.conf
     depends_on:
-      # Depende de todos los servicios API para asegurar el orden de inicio
       - formatter-service-api
       - execution-service-api
       - analyzer-service-api
       - authorization-service-api
       - authentication-service-api
     networks:
-      - dev-network # Red específica para dev
+      - dev-network
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -27,71 +25,72 @@ services:
   # === FORMATTER SERVICE ===
   formatter-db:
     image: postgres:16
-    container_name: formatter_db_dev # Nombre específico para dev
+    container_name: formatter_db_dev
     environment:
       POSTGRES_USER: ${POSTGRES_USER_FORMATTER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_FORMATTER}
       POSTGRES_DB: ${POSTGRES_DB_FORMATTER}
     volumes:
-      - formatter_data_dev:/var/lib/postgresql/data # Volumen específico para dev
+      - formatter_data_dev:/var/lib/postgresql/data
     networks:
       - dev-network
     restart: unless-stopped
-    logging: &logging_defaults # Alias para reutilizar config de logging
+    logging: &logging_defaults
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
   formatter-service-api:
-    container_name: formatter-service-api-dev # Nombre específico para dev
-    image: ghcr.io/tef-austral/formatter-service:dev # Imagen de desarrollo
-    # 'ports' no es necesario si solo se accede via nginx
+    container_name: formatter-service-api-dev
+    image: ghcr.io/tef-austral/formatter-service:dev
+    ports:
+      - "8001:8080"  # ✅ Puerto para testing directo
     environment:
-      SPRING_PROFILES_ACTIVE: development # Perfil de Spring para dev
+      SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://formatter-db:5432/${POSTGRES_DB_FORMATTER}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_FORMATTER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_FORMATTER}
-      # Añadir variables de Auth0 si este servicio las necesita
-      # AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
-      # AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
     depends_on:
       - formatter-db
     networks:
       - dev-network
     restart: unless-stopped
-    logging: *logging_defaults # Reutiliza config de logging
+    logging: *logging_defaults
 
   # === EXECUTION SERVICE ===
   execution-db:
     image: postgres:16
-    container_name: execution_db_dev # Nombre específico para dev
+    container_name: execution_db_dev
     environment:
       POSTGRES_USER: ${POSTGRES_USER_EXECUTION}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_EXECUTION}
       POSTGRES_DB: ${POSTGRES_DB_EXECUTION}
     volumes:
-      - execution_data_dev:/var/lib/postgresql/data # Volumen específico para dev
+      - execution_data_dev:/var/lib/postgresql/data
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
 
   execution-service-api:
-    container_name: execution-service-api-dev # Nombre específico para dev
-    image: ghcr.io/tef-austral/execution-service:dev # Imagen de desarrollo
+    container_name: execution-service-api-dev
+    image: ghcr.io/tef-austral/execution-service:dev
+    ports:
+      - "8003:8080"  # ✅ Puerto para testing directo
     environment:
-      SPRING_PROFILES_ACTIVE: development # Perfil de Spring para dev
+      SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://execution-db:5432/${POSTGRES_DB_EXECUTION}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_EXECUTION}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_EXECUTION}
-      # --- Variables de Auth0 y Servicios ---
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-      AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL} # URL para llamar a Authorization
+      AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
     depends_on:
       - execution-db
-      - authorization-service-api # Dependencia explícita
+      - authorization-service-api
     networks:
       - dev-network
     restart: unless-stopped
@@ -100,29 +99,30 @@ services:
   # === ANALYZER SERVICE ===
   analyzer-db:
     image: postgres:16
-    container_name: analyzer_db_dev # Nombre específico para dev
+    container_name: analyzer_db_dev
     environment:
       POSTGRES_USER: ${POSTGRES_USER_ANALYZER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_ANALYZER}
       POSTGRES_DB: ${POSTGRES_DB_ANALYZER}
     volumes:
-      - analyzer_data_dev:/var/lib/postgresql/data # Volumen específico para dev
+      - analyzer_data_dev:/var/lib/postgresql/data
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
 
   analyzer-service-api:
-    container_name: analyzer-service-api-dev # Nombre específico para dev
-    image: ghcr.io/tef-austral/analyzer-service:dev # Imagen de desarrollo
+    container_name: analyzer-service-api-dev
+    image: ghcr.io/tef-austral/analyzer-service:dev
+    ports:
+      - "8004:8080"  # ✅ Puerto para testing directo
     environment:
-      SPRING_PROFILES_ACTIVE: development # Perfil de Spring para dev
+      SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://analyzer-db:5432/${POSTGRES_DB_ANALYZER}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_ANALYZER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_ANALYZER}
-      # Añadir variables de Auth0 si este servicio las necesita
-      # AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
-      # AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
     depends_on:
       - analyzer-db
     networks:
@@ -133,27 +133,28 @@ services:
   # === AUTHORIZATION SERVICE ===
   authorization-db:
     image: postgres:16
-    container_name: authorization_db_dev # Nombre específico para dev
+    container_name: authorization_db_dev
     environment:
       POSTGRES_USER: ${POSTGRES_USER_AUTHORIZATION}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_AUTHORIZATION}
       POSTGRES_DB: ${POSTGRES_DB_AUTHORIZATION}
     volumes:
-      - authorization_data_dev:/var/lib/postgresql/data # Volumen específico para dev
+      - authorization_data_dev:/var/lib/postgresql/data
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
 
   authorization-service-api:
-    container_name: authorization-service-api-dev # Nombre específico para dev
-    image: ghcr.io/tef-austral/authorization-service:dev # Imagen de desarrollo
+    container_name: authorization-service-api-dev
+    image: ghcr.io/tef-austral/authorization-service:dev
+    ports:
+      - "8005:8080"  # ✅ Puerto para testing directo
     environment:
-      SPRING_PROFILES_ACTIVE: development # Perfil de Spring para dev
+      SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://authorization-db:5432/${POSTGRES_DB_AUTHORIZATION}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_AUTHORIZATION}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_AUTHORIZATION}
-      # --- Variables de Auth0 ---
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
     depends_on:
@@ -166,27 +167,28 @@ services:
   # === AUTHENTICATION SERVICE ===
   authentication-db:
     image: postgres:16
-    container_name: authentication_db_dev # Nombre específico para dev
+    container_name: authentication_db_dev
     environment:
       POSTGRES_USER: ${POSTGRES_USER_AUTHENTICATION}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_AUTHENTICATION}
       POSTGRES_DB: ${POSTGRES_DB_AUTHENTICATION}
     volumes:
-      - authentication_data_dev:/var/lib/postgresql/data # Volumen específico para dev
+      - authentication_data_dev:/var/lib/postgresql/data
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
 
   authentication-service-api:
-    container_name: authentication-service-api-dev # Nombre específico para dev
-    image: ghcr.io/tef-austral/authentication-service:dev # Imagen de desarrollo
+    container_name: authentication-service-api-dev
+    image: ghcr.io/tef-austral/authentication-service:dev
+    ports:
+      - "8006:8080"  # ✅ PUERTO AGREGADO - Necesario para test-auth.sh
     environment:
-      SPRING_PROFILES_ACTIVE: development # Perfil de Spring para dev
+      SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://authentication-db:5432/${POSTGRES_DB_AUTHENTICATION}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_AUTHENTICATION}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_AUTHENTICATION}
-      # --- Variables de Auth0 (ya las tenías) ---
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
@@ -199,8 +201,6 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
-# === VOLÚMENES ===
-# Define volúmenes nombrados para persistir los datos de las BBDD de dev
 volumes:
   formatter_data_dev:
   execution_data_dev:
@@ -208,8 +208,6 @@ volumes:
   authorization_data_dev:
   authentication_data_dev:
 
-# === RED ===
-# Define una red única para el entorno de desarrollo
 networks:
   dev-network:
     driver: bridge
