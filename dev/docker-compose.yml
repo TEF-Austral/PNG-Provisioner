@@ -11,7 +11,6 @@ services:
     depends_on:
       # Depende de todos los servicios API para asegurar el orden de inicio
       - formatter-service-api
-      - snippet-service-api # Considera si este servicio aún existe o se fusionó
       - execution-service-api
       - analyzer-service-api
       - authorization-service-api
