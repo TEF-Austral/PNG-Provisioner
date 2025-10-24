@@ -6,13 +6,14 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx-dev.conf:/etc/nginx/nginx.conf:ro  # Usar nginx-dev.conf
+      - ./nginx-dev.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - formatter-service-api
       - execution-service-api
       - analyzer-service-api
       - authorization-service-api
       - authentication-service-api
+      - asset-service-api
     networks:
       - dev-network
     restart: unless-stopped
@@ -45,7 +46,7 @@ services:
     container_name: formatter-service-api-dev
     image: ghcr.io/tef-austral/formatter-service:dev
     ports:
-      - "8001:8080"  # ✅ Puerto para testing directo
+      - "8001:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://formatter-db:5432/${POSTGRES_DB_FORMATTER}
@@ -79,7 +80,7 @@ services:
     container_name: execution-service-api-dev
     image: ghcr.io/tef-austral/execution-service:dev
     ports:
-      - "8003:8080"  # ✅ Puerto para testing directo
+      - "8003:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://execution-db:5432/${POSTGRES_DB_EXECUTION}
@@ -115,7 +116,7 @@ services:
     container_name: analyzer-service-api-dev
     image: ghcr.io/tef-austral/analyzer-service:dev
     ports:
-      - "8004:8080"  # ✅ Puerto para testing directo
+      - "8004:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://analyzer-db:5432/${POSTGRES_DB_ANALYZER}
@@ -149,7 +150,7 @@ services:
     container_name: authorization-service-api-dev
     image: ghcr.io/tef-austral/authorization-service:dev
     ports:
-      - "8005:8080"  # ✅ Puerto para testing directo
+      - "8005:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://authorization-db:5432/${POSTGRES_DB_AUTHORIZATION}
@@ -183,7 +184,7 @@ services:
     container_name: authentication-service-api-dev
     image: ghcr.io/tef-austral/authentication-service:dev
     ports:
-      - "8006:8080"  # ✅ PUERTO AGREGADO - Necesario para test-auth.sh
+      - "8006:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://authentication-db:5432/${POSTGRES_DB_AUTHENTICATION}
@@ -201,12 +202,48 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
+  # === ASSET SERVICE (AGREGADOS) ===
+  asset-service-api:
+    container_name: "asset_service_dev"
+    image: ghcr.io/austral-ingsis/snippet-asset-service:latest
+    ports:
+      - "8080:8080"
+    environment:
+      AZURE_HOST: "http://azurite"
+      NEW_RELIC_APP_NAME: "asset-service"
+      NEW_RELIC_AGENT_ENABLED: false
+    networks:
+      - dev-network
+    depends_on:
+      - azurite
+    restart: unless-stopped
+    logging: *logging_defaults
+
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: "azurite_dev"
+    hostname: azurite
+    restart: always
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - blob:/workspace
+    networks:
+      - dev-network
+    logging: *logging_defaults
+
+
 volumes:
   formatter_data_dev:
   execution_data_dev:
   analyzer_data_dev:
   authorization_data_dev:
   authentication_data_dev:
+  blob: # <-- AGREGADO
+    external: false
 
 networks:
   dev-network:

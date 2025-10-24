@@ -14,6 +14,7 @@ services:
       - analyzer-service-api
       - authorization-service-api
       - authentication-service-api
+      - asset-service-api  # <-- AGREGADO
     networks:
       - prod-network
     restart: unless-stopped
@@ -203,15 +204,47 @@ services:
     restart: unless-stopped
     logging: *logging_config
 
-# --- Volúmenes Persistentes para las Bases de Datos ---
+  # === ASSET SERVICE (AGREGADOS) ===
+  asset-service-api:
+    container_name: "asset_service_api_prod" # Sigue la convención _prod
+    image: ghcr.io/austral-ingsis/snippet-asset-service:latest
+    ports:
+      - "8007:8080" # Asigné el puerto 8007 (asumiendo que está libre)
+    environment:
+      AZURE_HOST: "http://azurite"
+      NEW_RELIC_APP_NAME: "asset-service"
+      NEW_RELIC_AGENT_ENABLED: false
+    networks: # <-- Conectado a tu red de prod
+      - prod-network
+    depends_on:
+      - azurite
+    restart: unless-stopped
+    logging: *logging_config # Aplica la config de logging
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: "azurite_prod" # Sigue la convención _prod
+    hostname: azurite
+    restart: always
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - blob_prod:/workspace # Renombrado para prod
+    networks: # <-- Conectado a tu red de prod
+      - prod-network
+    logging: *logging_config # Aplica la config de logging
+
+
 volumes:
   formatter_data_prod:
   execution_data_prod:
   analyzer_data_prod:
   authorization_data_prod:
   authentication_data_prod:
+  blob_prod: { }
 
-# --- Red Interna para Comunicación entre Contenedores ---
 networks:
   prod-network:
     driver: bridge
