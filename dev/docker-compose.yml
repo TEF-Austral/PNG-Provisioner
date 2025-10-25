@@ -45,8 +45,6 @@ services:
   formatter-service-api:
     container_name: formatter-service-api-dev
     image: ghcr.io/tef-austral/formatter-service:dev
-    ports:
-      - "8001:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://formatter-db:5432/${POSTGRES_DB_FORMATTER}
@@ -79,8 +77,6 @@ services:
   execution-service-api:
     container_name: execution-service-api-dev
     image: ghcr.io/tef-austral/execution-service:dev
-    ports:
-      - "8003:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://execution-db:5432/${POSTGRES_DB_EXECUTION}
@@ -115,8 +111,6 @@ services:
   analyzer-service-api:
     container_name: analyzer-service-api-dev
     image: ghcr.io/tef-austral/analyzer-service:dev
-    ports:
-      - "8004:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://analyzer-db:5432/${POSTGRES_DB_ANALYZER}
@@ -149,8 +143,6 @@ services:
   authorization-service-api:
     container_name: authorization-service-api-dev
     image: ghcr.io/tef-austral/authorization-service:dev
-    ports:
-      - "8005:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://authorization-db:5432/${POSTGRES_DB_AUTHORIZATION}
@@ -183,8 +175,6 @@ services:
   authentication-service-api:
     container_name: authentication-service-api-dev
     image: ghcr.io/tef-austral/authentication-service:dev
-    ports:
-      - "8006:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://authentication-db:5432/${POSTGRES_DB_AUTHENTICATION}
@@ -202,12 +192,41 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
-  # === ASSET SERVICE (AGREGADOS) ===
+
+  # === SNIPPET SERVICE ===
+  snippet-service-db:
+    image: postgres:16
+    container_name: snippet_db_dev
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_SNIPPET}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
+      POSTGRES_DB: ${POSTGRES_DB_SNIPPET}
+    volumes:
+      - snippet_data_dev:/var/lib/postgresql/data
+    networks:
+      - dev-network
+    restart: unless-stopped
+
+  snippet-service-api:
+    container_name: snippet-service-api-dev
+    image: ghcr.io/tef-austral/snippet-service:dev
+    environment:
+      SPRING_PROFILES_ACTIVE: development
+      SPRING_DATASOURCE_URL: jdbc:postgresql://snippet-service-db:5432/${POSTGRES_DB_SNIPPET}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
+      JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    depends_on:
+      - snippet-service-db
+    networks:
+      - dev-network
+    restart: unless-stopped
+    logging: *logging_defaults
+
+  # === ASSET SERVICE ===
   asset-service-api:
     container_name: "asset_service_dev"
     image: ghcr.io/austral-ingsis/snippet-asset-service:latest
-    ports:
-      - "8080:8080"
     environment:
       AZURE_HOST: "http://azurite"
       NEW_RELIC_APP_NAME: "asset-service"
@@ -242,7 +261,8 @@ volumes:
   analyzer_data_dev:
   authorization_data_dev:
   authentication_data_dev:
-  blob: # <-- AGREGADO
+  snippet_data_dev:
+  blob:
     external: false
 
 networks:
