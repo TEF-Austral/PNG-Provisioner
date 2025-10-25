@@ -2,23 +2,23 @@ services:
   # === NGINX REVERSE PROXY ===
   nginx:
     image: nginx:alpine
-    container_name: nginx-proxy-prod # Nombre específico para prod
+    container_name: nginx-proxy-prod
     ports:
-      - "80:80" # Puerto público
+      - "80:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro # Asegúrate que nginx.conf esté en la misma carpeta o ajusta la ruta
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      # Depende de todos los servicios API para iniciar después
       - formatter-service-api
+      - snippet-service-api
       - execution-service-api
       - analyzer-service-api
       - authorization-service-api
       - authentication-service-api
-      - asset-service-api  # <-- AGREGADO
+      - asset-service-api
     networks:
       - prod-network
     restart: unless-stopped
-    logging: &logging_config # Alias para reutilizar config de logging
+    logging: &logging_config
       driver: "json-file"
       options:
         max-size: "10m"
@@ -41,19 +41,46 @@ services:
 
   formatter-service-api:
     container_name: formatter-service-api-prod
-    image: ghcr.io/tef-austral/formatter-service:latest # Usa la imagen ':latest' para prod
-    ports:
-      - 8001:8080 # Puerto expuesto (accesible a través de Nginx)
+    image: ghcr.io/tef-austral/formatter-service:latest
     environment:
-      SPRING_PROFILES_ACTIVE: production # Activa el perfil de producción
+      SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://formatter-db:5432/${POSTGRES_DB_FORMATTER}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_FORMATTER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_FORMATTER}
-      # Auth0 (si este servicio necesita validar tokens)
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
     depends_on:
       - formatter-db
+    networks:
+      - prod-network
+    restart: unless-stopped
+    logging: *logging_config
+
+  # === SNIPPET SERVICE ===
+  snippet-service-db:
+    image: postgres:16
+    container_name: snippet_db_prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_SNIPPET}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
+      POSTGRES_DB: ${POSTGRES_DB_SNIPPET}
+    volumes:
+      - snippet_data_prod:/var/lib/postgresql/data
+    networks:
+      - prod-network
+    restart: unless-stopped
+    logging: *logging_config
+
+  snippet-service-api:
+    container_name: snippet-service-api-prod
+    image: ghcr.io/tef-austral/snippet-service:latest
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      SPRING_DATASOURCE_URL: jdbc:postgresql://snippet-service-db:5432/${POSTGRES_DB_SNIPPET}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
+    depends_on:
+      - snippet-service-db
     networks:
       - prod-network
     restart: unless-stopped
@@ -76,21 +103,18 @@ services:
 
   execution-service-api:
     container_name: execution-service-api-prod
-    image: ghcr.io/tef-austral/execution-service:latest # Usa la imagen ':latest' para prod
-    ports:
-      - 8003:8080
+    image: ghcr.io/tef-austral/execution-service:latest
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://execution-db:5432/${POSTGRES_DB_EXECUTION}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_EXECUTION}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_EXECUTION}
-      # --- Configuración Auth0 y URL del servicio de autorización ---
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-      AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL} # Pasa la URL
+      AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
     depends_on:
       - execution-db
-      - authorization-service-api # Dependencia explícita
+      - authorization-service-api
     networks:
       - prod-network
     restart: unless-stopped
@@ -113,15 +137,12 @@ services:
 
   analyzer-service-api:
     container_name: analyzer-service-api-prod
-    image: ghcr.io/tef-austral/analyzer-service:latest # Usa la imagen ':latest' para prod
-    ports:
-      - 8004:8080
+    image: ghcr.io/tef-austral/analyzer-service:latest
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://analyzer-db:5432/${POSTGRES_DB_ANALYZER}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_ANALYZER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_ANALYZER}
-      # Auth0 (si necesita validar tokens)
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
     depends_on:
@@ -148,15 +169,12 @@ services:
 
   authorization-service-api:
     container_name: authorization-service-api-prod
-    image: ghcr.io/tef-austral/authorization-service:latest # Usa la imagen ':latest' para prod
-    ports:
-      - 8005:8080
+    image: ghcr.io/tef-austral/authorization-service:latest
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://authorization-db:5432/${POSTGRES_DB_AUTHORIZATION}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_AUTHORIZATION}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_AUTHORIZATION}
-      # --- Configuración Auth0 ---
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
     depends_on:
@@ -183,20 +201,17 @@ services:
 
   authentication-service-api:
     container_name: authentication-service-api-prod
-    image: ghcr.io/tef-austral/authentication-service:latest # Usa la imagen ':latest' para prod
-    ports:
-      - 8006:8080
+    image: ghcr.io/tef-austral/authentication-service:latest
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://authentication-db:5432/${POSTGRES_DB_AUTHENTICATION}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_AUTHENTICATION}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_AUTHENTICATION}
-      # --- Configuración Auth0 (completa para API Management) ---
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
       AUTH0_MGMT_CLIENT_ID: ${AUTH0_MGMT_CLIENT_ID}
-      AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_SECRET} # Asegúrate que el nombre coincida con tu .env
+      AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
     depends_on:
       - authentication-db
     networks:
@@ -204,26 +219,24 @@ services:
     restart: unless-stopped
     logging: *logging_config
 
-  # === ASSET SERVICE (AGREGADOS) ===
+  # === ASSET SERVICE ===
   asset-service-api:
-    container_name: "asset_service_api_prod" # Sigue la convención _prod
+    container_name: "asset_service_api_prod"
     image: ghcr.io/austral-ingsis/snippet-asset-service:latest
-    ports:
-      - "8007:8080" # Asigné el puerto 8007 (asumiendo que está libre)
     environment:
       AZURE_HOST: "http://azurite"
       NEW_RELIC_APP_NAME: "asset-service"
       NEW_RELIC_AGENT_ENABLED: false
-    networks: # <-- Conectado a tu red de prod
+    networks:
       - prod-network
     depends_on:
       - azurite
     restart: unless-stopped
-    logging: *logging_config # Aplica la config de logging
+    logging: *logging_config
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite
-    container_name: "azurite_prod" # Sigue la convención _prod
+    container_name: "azurite_prod"
     hostname: azurite
     restart: always
     ports:
@@ -231,19 +244,20 @@ services:
       - "10001:10001"
       - "10002:10002"
     volumes:
-      - blob_prod:/workspace # Renombrado para prod
-    networks: # <-- Conectado a tu red de prod
+      - blob_prod:/workspace
+    networks:
       - prod-network
-    logging: *logging_config # Aplica la config de logging
+    logging: *logging_config
 
 
 volumes:
   formatter_data_prod:
+  snippet_data_prod:
   execution_data_prod:
   analyzer_data_prod:
   authorization_data_prod:
   authentication_data_prod:
-  blob_prod: { }
+  blob_prod:
 
 networks:
   prod-network:
