@@ -14,10 +14,34 @@ services:
       - authorization-service-api
       - authentication-service-api
       - asset-service-api
+      - printscript-ui
     networks:
       - dev-network
     restart: unless-stopped
     logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # === PRINTSCRIPT UI ===
+  printscript-ui:
+    container_name: printscript-ui-dev
+    build:
+      context: ../printscript-ui
+      dockerfile: Dockerfile.dev
+      args:
+        PORT: 5173
+    environment:
+      VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN}
+      VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID}
+      PORT: 5173
+    ports:
+      - "5173:5173"
+    networks:
+      - dev-network
+    restart: unless-stopped
+    logging: &logging_defaults
       driver: "json-file"
       options:
         max-size: "10m"
@@ -36,11 +60,7 @@ services:
     networks:
       - dev-network
     restart: unless-stopped
-    logging: &logging_defaults
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging_defaults
 
   formatter-service-api:
     container_name: formatter-service-api-dev

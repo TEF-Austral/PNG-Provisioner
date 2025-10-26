@@ -15,6 +15,7 @@ services:
       - authorization-service-api
       - authentication-service-api
       - asset-service-api
+      - printscript-ui
     networks:
       - prod-network
     restart: unless-stopped
@@ -23,6 +24,23 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  # === PRINTSCRIPT UI ===
+  printscript-ui:
+    container_name: printscript-ui-prod
+    build:
+      context: ../printscript-ui
+      dockerfile: Dockerfile.prod
+      args:
+        PORT: 4173
+    environment:
+      VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN}
+      VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID}
+      PORT: 4173
+    networks:
+      - prod-network
+    restart: unless-stopped
+    logging: *logging_config
 
   # === FORMATTER SERVICE ===
   formatter-db:
