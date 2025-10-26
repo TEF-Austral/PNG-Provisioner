@@ -28,7 +28,6 @@ services:
   printscript-ui:
     container_name: printscript-ui-dev
     build:
-      context: ../printscript-ui
       dockerfile: Dockerfile.dev
       args:
         PORT: 5173
@@ -41,6 +40,7 @@ services:
     networks:
       - dev-network
     restart: unless-stopped
+    image: ghcr.io/tef-austral/printscript-ui:dev
     logging: &logging_defaults
       driver: "json-file"
       options:

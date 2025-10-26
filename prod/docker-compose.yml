@@ -29,17 +29,17 @@ services:
   printscript-ui:
     container_name: printscript-ui-prod
     build:
-      context: ../printscript-ui
       dockerfile: Dockerfile.prod
       args:
-        PORT: 4173
+        PORT: 5173
     environment:
       VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN}
       VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID}
-      PORT: 4173
+      PORT: 5173
     networks:
       - prod-network
     restart: unless-stopped
+    image: ghcr.io/tef-austral/printscript-ui:latest
     logging: *logging_config
 
   # === FORMATTER SERVICE ===
