@@ -4,9 +4,11 @@ services:
     image: nginx:alpine
     container_name: nginx-proxy-dev
     ports:
-      - "80:80"
+      - "80:80"    # HTTP (redirige a HTTPS)
+      - "443:443"  # HTTPS
     volumes:
-      - ../nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
     depends_on:
       - formatter-service-api
       - execution-service-api
@@ -193,7 +195,7 @@ services:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://snippet-service-db:5432/${POSTGRES_DB_SNIPPET}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_POSTGRES_PASSWORD_SNIPPET}
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
       JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     depends_on:
