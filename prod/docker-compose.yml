@@ -13,7 +13,6 @@ services:
       - execution-service-api
       - analyzer-service-api
       - authorization-service-api
-      - authentication-service-api
       - asset-service-api
       - printscript-ui
     networks:
@@ -199,41 +198,6 @@ services:
     restart: unless-stopped
     logging: *logging_config
 
-  # === AUTHENTICATION SERVICE ===
-  authentication-db:
-    image: postgres:16
-    container_name: authentication_db_prod
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER_AUTHENTICATION}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_AUTHENTICATION}
-      POSTGRES_DB: ${POSTGRES_DB_AUTHENTICATION}
-    volumes:
-      - authentication_data_prod:/var/lib/postgresql/data
-    networks:
-      - prod-network
-    restart: unless-stopped
-    logging: *logging_config
-
-  authentication-service-api:
-    container_name: authentication-service-api-prod
-    image: ghcr.io/tef-austral/authentication-service:latest
-    environment:
-      SPRING_PROFILES_ACTIVE: production
-      SPRING_DATASOURCE_URL: jdbc:postgresql://authentication-db:5432/${POSTGRES_DB_AUTHENTICATION}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_AUTHENTICATION}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_AUTHENTICATION}
-      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
-      AUTH0_MGMT_CLIENT_ID: ${AUTH0_MGMT_CLIENT_ID}
-      AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
-    depends_on:
-      - authentication-db
-    networks:
-      - prod-network
-    restart: unless-stopped
-    logging: *logging_config
-
   # === ASSET SERVICE ===
   asset-service-api:
     container_name: "asset_service_api_prod"
@@ -271,7 +235,6 @@ volumes:
   execution_data_prod:
   analyzer_data_prod:
   authorization_data_prod:
-  authentication_data_prod:
   blob_prod:
 
 networks:
