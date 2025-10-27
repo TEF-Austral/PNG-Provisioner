@@ -16,7 +16,7 @@ jobs:
       - name: Dispatch repository events to trigger deploy workflows
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_TOKEN }}
           script: |
             async function dispatch(env, version) {
               await github.rest.repos.createDispatchEvent({
