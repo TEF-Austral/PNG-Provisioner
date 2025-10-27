@@ -1,5 +1,4 @@
 services:
-
   nginx:
     image: nginx:alpine
     container_name: nginx-proxy-dev
@@ -7,7 +6,7 @@ services:
       - "80:80"    # HTTP (redirige a HTTPS)
       - "443:443"  # HTTPS
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./dev/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/certs:/etc/nginx/certs:ro
     depends_on:
       - formatter-service-api
@@ -16,6 +15,7 @@ services:
       - authorization-service-api
       - asset-service-api
       - printscript-ui
+      - snippet-service-api
     networks:
       - dev-network
     restart: unless-stopped
