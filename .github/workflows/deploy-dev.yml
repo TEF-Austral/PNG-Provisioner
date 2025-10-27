@@ -6,6 +6,7 @@ on:
   push:
     paths:
       - 'dev/**'
+      - '.env'
   workflow_dispatch:
     inputs:
       service:
@@ -56,21 +57,26 @@ jobs:
             # Update provisioner repo
             git pull origin main
             
-            # Copy dev docker-compose if it changed
-            if [ -f dev/docker-compose.yml ]; then
-              cp dev/docker-compose.yml docker-compose.yml
+            # Verify .env exists in root
+            if [ -f .env ]; then
+              echo "📄 Using .env from root directory"
+            else
+              echo "⚠️  Warning: .env file not found in root"
             fi
+            
+            # Move to dev directory
+            cd dev
             
             # Login to GHCR
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # Deploy
+            # Deploy (using .env from parent directory)
             if [ "${{ steps.info.outputs.service }}" = "all" ]; then
-              docker compose pull
-              docker compose up -d --remove-orphans
+              docker compose --env-file ../.env pull
+              docker compose --env-file ../.env up -d --remove-orphans
             else
-              docker compose pull ${{ steps.info.outputs.service }}-api
-              docker compose up -d ${{ steps.info.outputs.service }}-api
+              docker compose --env-file ../.env pull ${{ steps.info.outputs.service }}-api
+              docker compose --env-file ../.env up -d ${{ steps.info.outputs.service }}-api
             fi
             
             # Cleanup
