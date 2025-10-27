@@ -4,6 +4,8 @@ on:
   repository_dispatch:
     types: [ service_updated ]
   push:
+    branches:
+      - main
     paths:
       - 'prod/**'
   workflow_dispatch:
