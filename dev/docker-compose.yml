@@ -54,8 +54,8 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # === EXECUTION SERVICE ===
-  execution-db:
+  # === PrintScript SERVICE ===
+  PrintScript-db:
     image: postgres:16
     container_name: execution_db_dev
     environment:
@@ -69,7 +69,7 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
-  execution-service-api:
+  PrintScript-service-api:
     container_name: execution-service-api-dev
     image: ghcr.io/tef-austral/execution-service:dev
     environment:
