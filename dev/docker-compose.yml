@@ -64,9 +64,10 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
+
   printscript-service-api:
     container_name: printscript-service-api-dev
-    image: ghcr.io/tef-austral/printscript-service:dev
+    image: ghcr.io/tef-austral/execution-service:dev
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://printscript-db:5432/${POSTGRES_DB_PRINTSCRIPT}

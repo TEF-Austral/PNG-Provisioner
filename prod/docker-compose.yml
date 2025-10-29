@@ -83,9 +83,11 @@ services:
     restart: unless-stopped
     logging: *logging_config
 
+
+#ghcr.io/tef-austral/printscript-service:latest
   printscript-service-api:
     container_name: printscript-service-api-prod
-    image: ghcr.io/tef-austral/printscript-service:latest
+    image: ghcr.io/tef-austral/execution-service:latest
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://execution-db:5432/${POSTGRES_DB_PRINTSCRIPT}
