@@ -77,7 +77,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
       POSTGRES_DB: ${POSTGRES_DB_PRINTSCRIPT}
     volumes:
-      - execution_data_prod:/var/lib/postgresql/data
+      - printscript_data_prod:/var/lib/postgresql/data
     networks:
       - prod-network
     restart: unless-stopped
