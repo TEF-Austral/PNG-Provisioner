@@ -67,7 +67,7 @@ services:
 
   printscript-service-api:
     container_name: printscript-service-api-dev
-    image: ghcr.io/tef-austral/execution-service:dev
+    image: ghcr.io/tef-austral/printscript-service:dev
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://printscript-db:5432/${POSTGRES_DB_PRINTSCRIPT}
@@ -135,12 +135,17 @@ services:
   snippet-service-api:
     container_name: snippet-service-api-dev
     image: ghcr.io/tef-austral/snippet-service:dev
+    ports:
+      - "8002:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://snippet-service-db:5432/${POSTGRES_DB_SNIPPET}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
+      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
       JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
