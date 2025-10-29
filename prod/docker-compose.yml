@@ -190,7 +190,7 @@ services:
     logging: *logging_defaults
 
 volumes:
-  printscript-data_prod:
+  printscript_data_prod:
   authorization_data_prod:
   snippet_data_prod:
   blob:
