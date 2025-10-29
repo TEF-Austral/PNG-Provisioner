@@ -30,16 +30,13 @@ services:
       - ./certbot/www/:/var/www/certbot/:rw
       - ./certbot/conf/:/etc/letsencrypt/:rw
 
-  # === PRINTSCRIPT UI (CORREGIDO) ===
+  # === PRINTSCRIPT UI ===
   printscript-ui:
     container_name: printscript-ui-prod
     environment:
       VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN}
       VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID}
-      # PORT: 5173  <- Se elimina, la imagen Nginx no usa esto.
     ports:
-      # CAMBIO AQUÍ: Se mapea el puerto 5173 del HOST
-      # al puerto 80 del CONTENEDOR (donde Nginx escucha).
       - "5173:80"
     networks:
       - prod-network
