@@ -1,29 +1,39 @@
+version: '3'
+
 services:
-  nginx:
-    image: nginx:alpine
+  webserver:
+    image: nginx:latest
     container_name: nginx-proxy-dev
     ports:
-      - "80:80"    # HTTP (redirige a HTTPS)
-      - "443:443"  # HTTPS
+      - "80:80"
+      - "443:443"
+    restart: always
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/conf/:/etc/nginx/conf.d/:ro
+      - ./certbot/www/:/var/www/certbot/:ro
+      - ./certbot/conf/:/etc/letsencrypt/:ro
     depends_on:
-      - formatter-service-api
       - execution-service-api
-      - analyzer-service-api
       - authorization-service-api
       - asset-service-api
       - printscript-ui
       - snippet-service-api
     networks:
       - dev-network
-    restart: unless-stopped
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot-dev
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
+    networks:
+      - dev-network
 
   # === PRINTSCRIPT UI ===
   printscript-ui:
@@ -43,38 +53,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-  # === FORMATTER SERVICE ===
-  formatter-db:
-    image: postgres:16
-    container_name: formatter_db_dev
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER_FORMATTER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_FORMATTER}
-      POSTGRES_DB: ${POSTGRES_DB_FORMATTER}
-    volumes:
-      - formatter_data_dev:/var/lib/postgresql/data
-    networks:
-      - dev-network
-    restart: unless-stopped
-    logging: *logging_defaults
-
-  formatter-service-api:
-    container_name: formatter-service-api-dev
-    image: ghcr.io/tef-austral/formatter-service:dev
-    environment:
-      SPRING_PROFILES_ACTIVE: development
-      SPRING_DATASOURCE_URL: jdbc:postgresql://formatter-db:5432/${POSTGRES_DB_FORMATTER}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_FORMATTER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_FORMATTER}
-      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-    depends_on:
-      - formatter-db
-    networks:
-      - dev-network
-    restart: unless-stopped
-    logging: *logging_defaults
 
   # === EXECUTION SERVICE ===
   execution-db:
@@ -105,38 +83,6 @@ services:
     depends_on:
       - execution-db
       - authorization-service-api
-    networks:
-      - dev-network
-    restart: unless-stopped
-    logging: *logging_defaults
-
-  # === ANALYZER SERVICE ===
-  analyzer-db:
-    image: postgres:16
-    container_name: analyzer_db_dev
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER_ANALYZER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_ANALYZER}
-      POSTGRES_DB: ${POSTGRES_DB_ANALYZER}
-    volumes:
-      - analyzer_data_dev:/var/lib/postgresql/data
-    networks:
-      - dev-network
-    restart: unless-stopped
-    logging: *logging_defaults
-
-  analyzer-service-api:
-    container_name: analyzer-service-api-dev
-    image: ghcr.io/tef-austral/analyzer-service:dev
-    environment:
-      SPRING_PROFILES_ACTIVE: development
-      SPRING_DATASOURCE_URL: jdbc:postgresql://analyzer-db:5432/${POSTGRES_DB_ANALYZER}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_ANALYZER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_ANALYZER}
-      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-    depends_on:
-      - analyzer-db
     networks:
       - dev-network
     restart: unless-stopped
@@ -220,7 +166,6 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
-
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite
     container_name: "azurite_dev"
@@ -246,11 +191,8 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
-
 volumes:
-  formatter_data_dev:
   execution_data_dev:
-  analyzer_data_dev:
   authorization_data_dev:
   snippet_data_dev:
   blob:
