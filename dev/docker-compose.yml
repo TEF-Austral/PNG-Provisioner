@@ -76,6 +76,8 @@ services:
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
+      REDIS_HOST: redis-bus
+      REDIS_PORT: 6379
     depends_on:
       - printscript-db
       - authorization-service-api
@@ -139,6 +141,8 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
+      REDIS_HOST: redis-bus
+      REDIS_PORT: 6379
       JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     depends_on:
       - snippet-service-db
