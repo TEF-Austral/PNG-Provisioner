@@ -10,10 +10,8 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/certs:/etc/nginx/certs:ro
     depends_on:
-      - formatter-service-api
       - snippet-service-api
-      - execution-service-api
-      - analyzer-service-api
+      - printscript-service-api
       - authorization-service-api
       - asset-service-api
       - printscript-ui
@@ -37,38 +35,6 @@ services:
       - prod-network
     restart: unless-stopped
     image: ghcr.io/tef-austral/printscript-ui:latest
-    logging: *logging_config
-
-  # === FORMATTER SERVICE ===
-  formatter-db:
-    image: postgres:16
-    container_name: formatter_db_prod
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER_FORMATTER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_FORMATTER}
-      POSTGRES_DB: ${POSTGRES_DB_FORMATTER}
-    volumes:
-      - formatter_data_prod:/var/lib/postgresql/data
-    networks:
-      - prod-network
-    restart: unless-stopped
-    logging: *logging_config
-
-  formatter-service-api:
-    container_name: formatter-service-api-prod
-    image: ghcr.io/tef-austral/formatter-service:latest
-    environment:
-      SPRING_PROFILES_ACTIVE: production
-      SPRING_DATASOURCE_URL: jdbc:postgresql://formatter-db:5432/${POSTGRES_DB_FORMATTER}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_FORMATTER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_FORMATTER}
-      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-    depends_on:
-      - formatter-db
-    networks:
-      - prod-network
-    restart: unless-stopped
     logging: *logging_config
 
   # === SNIPPET SERVICE ===
@@ -102,14 +68,14 @@ services:
     restart: unless-stopped
     logging: *logging_config
 
-  # === EXECUTION SERVICE ===
-  execution-db:
+  # === PrintScript SERVICE ===
+  printscript-db:
     image: postgres:16
-    container_name: execution_db_prod
+    container_name: printscript_db_prod
     environment:
-      POSTGRES_USER: ${POSTGRES_USER_EXECUTION}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_EXECUTION}
-      POSTGRES_DB: ${POSTGRES_DB_EXECUTION}
+      POSTGRES_USER: ${POSTGRES_USER_PRINTSCRIPT}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
+      POSTGRES_DB: ${POSTGRES_DB_PRINTSCRIPT}
     volumes:
       - execution_data_prod:/var/lib/postgresql/data
     networks:
@@ -117,14 +83,14 @@ services:
     restart: unless-stopped
     logging: *logging_config
 
-  execution-service-api:
-    container_name: execution-service-api-prod
-    image: ghcr.io/tef-austral/execution-service:latest
+  printscript-service-api:
+    container_name: printscript-service-api-prod
+    image: ghcr.io/tef-austral/printscript-service:latest
     environment:
       SPRING_PROFILES_ACTIVE: production
-      SPRING_DATASOURCE_URL: jdbc:postgresql://execution-db:5432/${POSTGRES_DB_EXECUTION}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_EXECUTION}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_EXECUTION}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://execution-db:5432/${POSTGRES_DB_PRINTSCRIPT}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_PRINTSCRIPT}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
@@ -136,37 +102,6 @@ services:
     restart: unless-stopped
     logging: *logging_config
 
-  # === ANALYZER SERVICE ===
-  analyzer-db:
-    image: postgres:16
-    container_name: analyzer_db_prod
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER_ANALYZER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_ANALYZER}
-      POSTGRES_DB: ${POSTGRES_DB_ANALYZER}
-    volumes:
-      - analyzer_data_prod:/var/lib/postgresql/data
-    networks:
-      - prod-network
-    restart: unless-stopped
-    logging: *logging_config
-
-  analyzer-service-api:
-    container_name: analyzer-service-api-prod
-    image: ghcr.io/tef-austral/analyzer-service:latest
-    environment:
-      SPRING_PROFILES_ACTIVE: production
-      SPRING_DATASOURCE_URL: jdbc:postgresql://analyzer-db:5432/${POSTGRES_DB_ANALYZER}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_ANALYZER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_ANALYZER}
-      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-    depends_on:
-      - analyzer-db
-    networks:
-      - prod-network
-    restart: unless-stopped
-    logging: *logging_config
 
   # === AUTHORIZATION SERVICE ===
   authorization-db:
@@ -242,10 +177,8 @@ services:
 
 
 volumes:
-  formatter_data_prod:
   snippet_data_prod:
-  execution_data_prod:
-  analyzer_data_prod:
+  printscript_data_prod:
   authorization_data_prod:
   blob_prod:
 

@@ -13,7 +13,7 @@ services:
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/letsencrypt/:ro
     depends_on:
-      - execution-service-api
+      - printscript-service-api
       - authorization-service-api
       - asset-service-api
       - printscript-ui
@@ -51,14 +51,14 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # === EXECUTION SERVICE ===
-  execution-db:
+  # === PrintScript SERVICE ===
+  printscript-db:
     image: postgres:16
-    container_name: execution_db_dev
+    container_name: printscript_db_dev
     environment:
-      POSTGRES_USER: ${POSTGRES_USER_EXECUTION}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_EXECUTION}
-      POSTGRES_DB: ${POSTGRES_DB_EXECUTION}
+      POSTGRES_USER: ${POSTGRES_USER_PRINTSCRIPT}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
+      POSTGRES_DB: ${POSTGRES_DB_PRINTSCRIPT}
     volumes:
       - execution_data_dev:/var/lib/postgresql/data
     networks:
@@ -66,19 +66,19 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
-  execution-service-api:
-    container_name: execution-service-api-dev
-    image: ghcr.io/tef-austral/execution-service:dev
+  printscript-service-api:
+    container_name: printscript-service-api-dev
+    image: ghcr.io/tef-austral/printscript-service:dev
     environment:
       SPRING_PROFILES_ACTIVE: development
-      SPRING_DATASOURCE_URL: jdbc:postgresql://execution-db:5432/${POSTGRES_DB_EXECUTION}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_EXECUTION}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_EXECUTION}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://printscript-db:5432/${POSTGRES_DB_PRINTSCRIPT}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_PRINTSCRIPT}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
     depends_on:
-      - execution-db
+      - printscript-db
       - authorization-service-api
     networks:
       - dev-network
@@ -189,7 +189,7 @@ services:
     logging: *logging_defaults
 
 volumes:
-  execution_data_dev:
+  printscript_data_dev:
   authorization_data_dev:
   snippet_data_dev:
   blob:
