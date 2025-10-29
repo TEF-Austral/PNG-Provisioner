@@ -30,15 +30,17 @@ services:
       - ./certbot/www/:/var/www/certbot/:rw
       - ./certbot/conf/:/etc/letsencrypt/:rw
 
-  # === PRINTSCRIPT UI ===
+  # === PRINTSCRIPT UI (CORREGIDO) ===
   printscript-ui:
     container_name: printscript-ui-prod
     environment:
       VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN}
       VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID}
-      PORT: 5173
+      # PORT: 5173  <- Se elimina, la imagen Nginx no usa esto.
     ports:
-      - "5173:5173"
+      # CAMBIO AQUÍ: Se mapea el puerto 5173 del HOST
+      # al puerto 80 del CONTENEDOR (donde Nginx escucha).
+      - "5173:80"
     networks:
       - prod-network
     restart: unless-stopped
@@ -188,7 +190,7 @@ services:
     logging: *logging_defaults
 
 volumes:
-  printscript_data_prod:
+  printscript-data_prod:
   authorization_data_prod:
   snippet_data_prod:
   blob:
@@ -197,3 +199,4 @@ volumes:
 networks:
   prod-network:
     driver: bridge
+
