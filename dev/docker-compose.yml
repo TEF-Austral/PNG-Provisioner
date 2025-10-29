@@ -9,7 +9,7 @@ services:
       - "443:443"
     restart: always
     volumes:
-      - ./nginx/conf/:/etc/nginx/conf.d/:ro
+      - ./nginx/conf/:/etc/nginx/nginx.conf:ro
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/letsencrypt/:ro
     depends_on:
@@ -28,12 +28,9 @@ services:
 
   certbot:
     image: certbot/certbot:latest
-    container_name: certbot-dev
     volumes:
       - ./certbot/www/:/var/www/certbot/:rw
       - ./certbot/conf/:/etc/letsencrypt/:rw
-    networks:
-      - dev-network
 
   # === PRINTSCRIPT UI ===
   printscript-ui:
