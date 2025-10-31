@@ -96,6 +96,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB_AUTHORIZATION}
     volumes:
       - authorization_data_dev:/var/lib/postgresql/data
+    ports:
+      - "9090:9090"
     networks:
       - dev-network
     restart: unless-stopped
