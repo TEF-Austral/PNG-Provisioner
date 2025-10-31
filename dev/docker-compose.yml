@@ -96,8 +96,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB_AUTHORIZATION}
     volumes:
       - authorization_data_dev:/var/lib/postgresql/data
-    ports:
-      - "9090:9090"
     networks:
       - dev-network
     restart: unless-stopped
@@ -106,6 +104,8 @@ services:
   authorization-service-api:
     container_name: authorization-service-api-dev
     image: ghcr.io/tef-austral/authorization-service:dev
+    ports:
+      - "9090:9090"
     environment:
       SPRING_PROFILES_ACTIVE: development
       SPRING_DATASOURCE_URL: jdbc:postgresql://authorization-db:5432/${POSTGRES_DB_AUTHORIZATION}
