@@ -59,8 +59,14 @@ jobs:
               docker compose pull
               docker compose up -d --remove-orphans
             else
-              docker compose pull ${{ steps.info.outputs.service }}-api
-              docker compose up -d ${{ steps.info.outputs.service }}-api
+              SERVICE_NAME="${{ steps.info.outputs.service }}"
+              case "$SERVICE_NAME" in
+              printscript-ui) SVC="$SERVICE_NAME" ;; 
+              *)              SVC="${SERVICE_NAME}-api" ;; 
+              esac
+            
+              docker compose pull "$SVC"
+              docker compose up -d "$SVC"
             fi
             
             # Cleanup
