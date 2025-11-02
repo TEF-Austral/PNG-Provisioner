@@ -78,6 +78,14 @@ services:
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
+      ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
+      REDIS_HOST: redis-bus
+      REDIS_PORT: 6379
+      DB_HOST: printscript-db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB_PRINTSCRIPT}
+      DB_USER: ${POSTGRES_USER_PRINTSCRIPT}
+      DB_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
     depends_on:
       - printscript-db
       - authorization-service-api
