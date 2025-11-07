@@ -11,11 +11,16 @@ services:
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/letsencrypt/:ro
     depends_on:
-      - printscript-service-api
-      - authorization-service-api
-      - asset-service-api
-      - printscript-ui
-      - snippet-service-api
+      printscript-service-api:
+        condition: service_healthy
+      authorization-service-api:
+        condition: service_healthy
+      asset-service-api:
+        condition: service_healthy
+      snippet-service-api:
+        condition: service_healthy
+      printscript-ui:
+        condition: service_healthy
     networks:
       - dev-network
     logging:
@@ -48,6 +53,12 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # === PrintScript SERVICE ===
   printscript-db:
@@ -63,7 +74,12 @@ services:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
-
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_PRINTSCRIPT} -d ${POSTGRES_DB_PRINTSCRIPT}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   printscript-service-api:
     container_name: printscript-service-api-dev
@@ -85,15 +101,24 @@ services:
       DB_USER: ${POSTGRES_USER_PRINTSCRIPT}
       DB_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
     depends_on:
-      - printscript-db
-      - printscript-ui
-      - authorization-service-api
-      - redis-bus
-      - asset-service-api
+      printscript-db:
+        condition: service_healthy
+      authorization-service-api:
+        condition: service_healthy
+      redis-bus:
+        condition: service_healthy
+      asset-service-api:
+        condition: service_healthy
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
   # === AUTHORIZATION SERVICE ===
   authorization-db:
@@ -109,6 +134,12 @@ services:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_AUTHORIZATION} -d ${POSTGRES_DB_AUTHORIZATION}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   authorization-service-api:
     container_name: authorization-service-api-dev
@@ -126,12 +157,20 @@ services:
       AUTH0_MGMT_CLIENT_ID: ${AUTH0_MGMT_CLIENT_ID}
       AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
     depends_on:
-      - authorization-db
-      - printscript-ui
+      authorization-db:
+        condition: service_healthy
+      printscript-ui:
+        condition: service_healthy
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
   # === SNIPPET SERVICE ===
   snippet-service-db:
@@ -146,6 +185,13 @@ services:
     networks:
       - dev-network
     restart: unless-stopped
+    logging: *logging_defaults
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_SNIPPET} -d ${POSTGRES_DB_SNIPPET}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   snippet-service-api:
     container_name: snippet-service-api-dev
@@ -154,7 +200,6 @@ services:
       - "8002:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
-
       SPRING_DATASOURCE_URL: jdbc:postgresql://snippet-service-db:5432/${POSTGRES_DB_SNIPPET}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
@@ -163,31 +208,37 @@ services:
       POSTGRES_DB_SNIPPET: ${POSTGRES_DB_SNIPPET}
       POSTGRES_USER_SNIPPET: ${POSTGRES_USER_SNIPPET}
       POSTGRES_PASSWORD_SNIPPET: ${POSTGRES_PASSWORD_SNIPPET}
-
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-
       SNIPPET_SERVICE_M2M_CLIENT_ID: ${SNIPPET_SERVICE_M2M_CLIENT_ID}
       SNIPPET_SERVICE_M2M_CLIENT_SECRET: ${SNIPPET_SERVICE_M2M_CLIENT_SECRET}
       AUTH0_M2M_SCOPE: ${AUTH0_M2M_SCOPE}
-
       PRINTSCRIPT_SERVICE_URL: ${PRINTSCRIPT_SERVICE_URL}
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
-
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
-
     depends_on:
-      - snippet-service-db
-      - printscript-service-api
-      - authorization-service-api
-      - asset-service-api
-      - redis-bus
+      snippet-service-db:
+        condition: service_healthy
+      printscript-service-api:
+        condition: service_healthy
+      authorization-service-api:
+        condition: service_healthy
+      asset-service-api:
+        condition: service_healthy
+      redis-bus:
+        condition: service_healthy
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
   # === ASSET SERVICE ===
   asset-service-api:
@@ -200,15 +251,22 @@ services:
     networks:
       - dev-network
     depends_on:
-      - azurite
+      azurite:
+        condition: service_healthy
     restart: unless-stopped
     logging: *logging_defaults
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite
     container_name: "azurite_dev"
     hostname: azurite
-    restart: always
+    restart: unless-stopped
     ports:
       - "10000:10000"
       - "10001:10001"
@@ -218,6 +276,12 @@ services:
     networks:
       - dev-network
     logging: *logging_defaults
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "10000"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
   redis-bus:
     image: redis:6-alpine
@@ -228,6 +292,12 @@ services:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    healthcheck:
+      test: ["CMD", "redis-cli", "PING"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 
 volumes:
   printscript_data_dev:
