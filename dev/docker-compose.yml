@@ -277,11 +277,11 @@ services:
       - dev-network
     logging: *logging_defaults
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "10000"]
-      interval: 5s
-      timeout: 3s
+      test: [ "CMD", "sh", "-c", "wget --no-verbose --tries=1 --spider http://localhost:10000/ || exit 1" ]
+      interval: 10s
+      timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 15s
 
   redis-bus:
     image: redis:6-alpine
