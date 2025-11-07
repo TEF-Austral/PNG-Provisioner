@@ -11,7 +11,7 @@ services:
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/letsencrypt/:ro
     # --- MODIFICADO ---
-    # Ahora espera a que las APIs estén saludables y la UI iniciada.
+    # Nginx ahora espera a que TODAS las APIs estén saludables
     depends_on:
       printscript-service-api:
         condition: service_healthy
@@ -72,7 +72,6 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
     # --- AÑADIDO ---
-    # Verifica que Postgres esté listo antes de continuar
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER_PRINTSCRIPT} -d ${POSTGRES_DB_PRINTSCRIPT}" ]
       interval: 5s
@@ -100,7 +99,6 @@ services:
       DB_USER: ${POSTGRES_USER_PRINTSCRIPT}
       DB_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
     # --- MODIFICADO ---
-    # Espera a que las dependencias estén saludables
     depends_on:
       printscript-db:
         condition: service_healthy
@@ -116,7 +114,6 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
     # --- AÑADIDO ---
-    # Verifica que la API Spring esté saludable
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
       interval: 10s
@@ -254,8 +251,7 @@ services:
       start_period: 20s
     # --- FIN AÑADIDO ---
 
-    # === ASSET SERVICE ===
-    # === ASSET SERVICE ===
+  # === ASSET SERVICE ===
   asset-service-api:
     container_name: "asset_service_dev"
     image: ghcr.io/austral-ingsis/snippet-asset-service:latest
@@ -265,21 +261,21 @@ services:
       NEW_RELIC_AGENT_ENABLED: false
     networks:
       - dev-network
+    # --- MODIFICADO ---
     depends_on:
       azurite:
         condition: service_healthy
+    # --- FIN MODIFICADO ---
     restart: unless-stopped
     logging: *logging_defaults
-    # --- MODIFICADO ---
-    # Cambiado a 'nc' (netcat) que existe en Alpine
-    # y comprueba si el puerto 8080 está escuchando.
+    # --- CORRECCIÓN DEFINITIVA (USA 'nc') ---
     healthcheck:
       test: [ "CMD-SHELL", "nc -z localhost 8080 || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-      # --- FIN MODIFICADO ---
+    # --- FIN CORRECCIÓN ---
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite
@@ -295,15 +291,14 @@ services:
     networks:
       - dev-network
     logging: *logging_defaults
-    # --- MODIFICADO ---
-    # Cambiado de 'curl' a 'wget --spider'
+    # --- CORRECCIÓN DEFINITIVA (USA 'nc') ---
     healthcheck:
-      test: [ "CMD-SHELL", "wget -q --spider http://127.0.0.1:10000/devstoreaccount1?comp=list" ]
+      test: [ "CMD-SHELL", "nc -z 127.0.0.1 10000 || exit 1" ]
       interval: 5s
       timeout: 5s
       retries: 5
       start_period: 10s
-    # --- FIN MODIFICADO ---
+    # --- FIN CORRECCIÓN ---
 
   redis-bus:
     image: redis:6-alpine
