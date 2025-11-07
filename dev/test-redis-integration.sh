@@ -25,13 +25,18 @@ sleep 20
 echo "✅ Services restarted and warmed up"
 echo ""
 
+
 # 4. Crear un asset de prueba en Azurite (asset-service)
 echo "4️⃣ Creating dummy asset in asset-service (Azurite)..."
 TEST_CONTENT="let x:number=5;println(x);"
-CONTAINER="test-bucket"
-KEY="test.ps-$(date +%s)" # Usamos una key única
 
 # --- INICIO DE LA CORRECCIÓN ---
+# El contenedor correcto es "snippets", no "test-bucket"
+CONTAINER="snippets"
+# --- FIN DE LA CORRECCIÓN ---
+
+KEY="test.ps-$(date +%s)" # Usamos una key única
+
 # Usamos la URL externa (la de Nginx) que está en el .env.example
 CREATE_URL="http://localhost/api/assets/v1/asset/$CONTAINER/$KEY"
 echo "   Calling: PUT $CREATE_URL"
@@ -48,7 +53,6 @@ if [ "$HTTP_STATUS" -ne 201 ] && [ "$HTTP_STATUS" -ne 200 ]; then
 fi
 echo "   ✅ Asset created: $CONTAINER/$KEY (Status: $HTTP_STATUS)"
 echo ""
-# --- FIN DE LA CORRECCIÓN ---
 
 
 # 5. Enviar evento de prueba como CAMPOS SEPARADOS
