@@ -248,7 +248,7 @@ services:
     logging: *logging_defaults
 
   redis-bus:
-    image: redis:6-alpine
+    image: redis:latest
     container_name: "redis_bus_dev"
     ports:
       - "6379:6379"
