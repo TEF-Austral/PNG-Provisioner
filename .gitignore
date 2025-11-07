@@ -3,7 +3,7 @@
 .*.env
 *.key
 *.crt
-
+*.pem
 ./dev/certbot
 ./prod/certbot
 
