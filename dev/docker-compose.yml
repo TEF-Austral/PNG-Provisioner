@@ -254,7 +254,8 @@ services:
       start_period: 20s
     # --- FIN AÑADIDO ---
 
-  # === ASSET SERVICE ===
+    # === ASSET SERVICE ===
+    # === ASSET SERVICE ===
   asset-service-api:
     container_name: "asset_service_dev"
     image: ghcr.io/austral-ingsis/snippet-asset-service:latest
@@ -264,22 +265,21 @@ services:
       NEW_RELIC_AGENT_ENABLED: false
     networks:
       - dev-network
-    # --- MODIFICADO ---
     depends_on:
       azurite:
         condition: service_healthy
-    # --- FIN MODIFICADO ---
     restart: unless-stopped
     logging: *logging_defaults
-    # --- AÑADIDO ---
-    # Asumimos que tiene un endpoint en / (o /health). Si falla, ajustar el path.
+    # --- MODIFICADO ---
+    # Cambiado a 'nc' (netcat) que existe en Alpine
+    # y comprueba si el puerto 8080 está escuchando.
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8080/ || exit 1" ]
+      test: [ "CMD-SHELL", "nc -z localhost 8080 || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-    # --- FIN AÑADIDO ---
+      # --- FIN MODIFICADO ---
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite
@@ -295,14 +295,15 @@ services:
     networks:
       - dev-network
     logging: *logging_defaults
-    # --- AÑADIDO ---
+    # --- MODIFICADO ---
+    # Cambiado de 'curl' a 'wget --spider'
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://127.0.0.1:10000/devstoreaccount1?comp=list" ]
+      test: [ "CMD-SHELL", "wget -q --spider http://127.0.0.1:10000/devstoreaccount1?comp=list" ]
       interval: 5s
-      timeout: 3s
+      timeout: 5s
       retries: 5
-      start_period: 5s
-    # --- FIN AÑADIDO ---
+      start_period: 10s
+    # --- FIN MODIFICADO ---
 
   redis-bus:
     image: redis:6-alpine
