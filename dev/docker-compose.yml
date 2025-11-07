@@ -86,7 +86,10 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
     depends_on:
       - printscript-db
+      - printscript-ui
       - authorization-service-api
+      - redis-bus
+      - asset-service-api
     networks:
       - dev-network
     restart: unless-stopped
@@ -124,6 +127,7 @@ services:
       AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
     depends_on:
       - authorization-db
+      - printscript-ui
     networks:
       - dev-network
     restart: unless-stopped
