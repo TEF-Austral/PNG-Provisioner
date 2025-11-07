@@ -16,7 +16,7 @@ services:
       authorization-service-api:
         condition: service_healthy
       asset-service-api:
-        condition: service_healthy # <-- Esto espera a que asset-service esté 100% listo
+        condition: service_healthy
       snippet-service-api:
         condition: service_healthy
       printscript-ui:
@@ -101,17 +101,19 @@ services:
       redis-bus:
         condition: service_healthy
       asset-service-api:
-        condition: service_healthy # <-- Espera a que asset-service esté saludable
+        condition: service_healthy
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    # --- MODIFICADO (curl -> nc) ---
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
+    # --- FIN MODIFICADO ---
 
   # === AUTHORIZATION SERVICE ===
   authorization-db:
@@ -157,12 +159,14 @@ services:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    # --- MODIFICADO (curl -> nc) ---
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
+    # --- FIN MODIFICADO ---
 
   # === SNIPPET SERVICE ===
   snippet-service-db:
@@ -223,12 +227,14 @@ services:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    # --- MODIFICADO (curl -> nc) ---
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
+    # --- FIN MODIFICADO ---
 
   # === ASSET SERVICE ===
   asset-service-api:
@@ -240,29 +246,25 @@ services:
       NEW_RELIC_AGENT_ENABLED: false
     networks:
       - dev-network
-    # --- MODIFICADO ---
-    # Solo espera a que azurite 'comience', no que esté 'saludable'
     depends_on:
       azurite:
         condition: service_started
     restart: unless-stopped
-    # --- FIN MODIFICADO ---
     logging: *logging_defaults
-    # --- MANTENEMOS ESTE HEALTHCHECK ---
-    # Este SI funcionará, porque la app asset-service SÍ tiene 'nc'
+    # --- MODIFICADO (aumentado start_period) ---
     healthcheck:
       test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s # Le da 10s para arrancar y conectarse a Azurite
-    # --- FIN ---
+      start_period: 20s # <-- Aumentado a 20s para dar tiempo a Azurite
+    # --- FIN MODIFICADO ---
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite
     container_name: "azurite_dev"
     hostname: azurite
-    restart: unless-stopped # <-- Cambiado de 'always'
+    restart: unless-stopped
     ports:
       - "10000:10000"
       - "10001:10001"
@@ -272,8 +274,7 @@ services:
     networks:
       - dev-network
     logging: *logging_defaults
-    # --- HEALTHCHECK ELIMINADO ---
-    # No podemos verificar esta imagen, así que eliminamos el healthcheck
+    # (Sin healthcheck, como en la versión anterior)
 
   redis-bus:
     image: redis:6-alpine
