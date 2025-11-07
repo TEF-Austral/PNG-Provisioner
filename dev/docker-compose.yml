@@ -86,7 +86,10 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
     depends_on:
       - printscript-db
+      - printscript-ui
       - authorization-service-api
+      - redis-bus
+      - asset-service-api
     networks:
       - dev-network
     restart: unless-stopped
@@ -124,6 +127,7 @@ services:
       AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
     depends_on:
       - authorization-db
+      - printscript-ui
     networks:
       - dev-network
     restart: unless-stopped
@@ -150,24 +154,36 @@ services:
       - "8002:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
-      PRINTSCRIPT_SERVICE_URL: ${PRINTSCRIPT_SERVICE_URL}
+
       SPRING_DATASOURCE_URL: jdbc:postgresql://snippet-service-db:5432/${POSTGRES_DB_SNIPPET}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
-      ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
+      DB_HOST: snippet-service-db
+      DB_PORT: 5432
+      POSTGRES_DB_SNIPPET: ${POSTGRES_DB_SNIPPET}
+      POSTGRES_USER_SNIPPET: ${POSTGRES_USER_SNIPPET}
+      POSTGRES_PASSWORD_SNIPPET: ${POSTGRES_PASSWORD_SNIPPET}
+
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+
+      SNIPPET_SERVICE_M2M_CLIENT_ID: ${SNIPPET_SERVICE_M2M_CLIENT_ID}
+      SNIPPET_SERVICE_M2M_CLIENT_SECRET: ${SNIPPET_SERVICE_M2M_CLIENT_SECRET}
+      AUTH0_M2M_SCOPE: ${AUTH0_M2M_SCOPE}
+
+      PRINTSCRIPT_SERVICE_URL: ${PRINTSCRIPT_SERVICE_URL}
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
+      ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
+
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
-      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_AUTH0_M2M_CLIENT_ID: ${SNIPPET_SERVICE_M2M_CLIENT_ID}
-      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_AUTH0_M2M_CLIENT_SECRET: ${SNIPPET_SERVICE_M2M_CLIENT_SECRET}
-      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_AUTH0_M2M_GRANT_TYPE: client_credentials
-      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_AUTH0_M2M_AUDIENCE: ${AUTH0_AUDIENCE}
-      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_AUTH0_M2M_TOKEN_URI: ${AUTH0_TOKEN_URI}
-      JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+
     depends_on:
       - snippet-service-db
+      - printscript-service-api
+      - authorization-service-api
+      - asset-service-api
+      - redis-bus
     networks:
       - dev-network
     restart: unless-stopped
