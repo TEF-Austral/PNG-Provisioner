@@ -10,12 +10,20 @@ services:
       - ./nginx/conf/app.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/letsencrypt/:ro
+    # --- MODIFICADO ---
+    # Ahora espera a que las APIs estén saludables y la UI iniciada.
     depends_on:
-      - printscript-service-api
-      - authorization-service-api
-      - asset-service-api
-      - printscript-ui
-      - snippet-service-api
+      printscript-service-api:
+        condition: service_healthy
+      authorization-service-api:
+        condition: service_healthy
+      asset-service-api:
+        condition: service_healthy
+      snippet-service-api:
+        condition: service_healthy
+      printscript-ui:
+        condition: service_started
+    # --- FIN MODIFICADO ---
     networks:
       - dev-network
     logging:
@@ -63,7 +71,14 @@ services:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
-
+    # --- AÑADIDO ---
+    # Verifica que Postgres esté listo antes de continuar
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER_PRINTSCRIPT} -d ${POSTGRES_DB_PRINTSCRIPT}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # --- FIN AÑADIDO ---
 
   printscript-service-api:
     container_name: printscript-service-api-dev
@@ -84,16 +99,31 @@ services:
       DB_NAME: ${POSTGRES_DB_PRINTSCRIPT}
       DB_USER: ${POSTGRES_USER_PRINTSCRIPT}
       DB_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
+    # --- MODIFICADO ---
+    # Espera a que las dependencias estén saludables
     depends_on:
-      - printscript-db
-      - printscript-ui
-      - authorization-service-api
-      - redis-bus
-      - asset-service-api
+      printscript-db:
+        condition: service_healthy
+      authorization-service-api:
+        condition: service_healthy
+      redis-bus:
+        condition: service_healthy
+      asset-service-api:
+        condition: service_healthy
+    # --- FIN MODIFICADO ---
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    # --- AÑADIDO ---
+    # Verifica que la API Spring esté saludable
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    # --- FIN AÑADIDO ---
 
   # === AUTHORIZATION SERVICE ===
   authorization-db:
@@ -109,6 +139,13 @@ services:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    # --- AÑADIDO ---
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER_AUTHORIZATION} -d ${POSTGRES_DB_AUTHORIZATION}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # --- FIN AÑADIDO ---
 
   authorization-service-api:
     container_name: authorization-service-api-dev
@@ -125,13 +162,25 @@ services:
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
       AUTH0_MGMT_CLIENT_ID: ${AUTH0_MGMT_CLIENT_ID}
       AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
+    # --- MODIFICADO ---
     depends_on:
-      - authorization-db
-      - printscript-ui
+      authorization-db:
+        condition: service_healthy
+      printscript-ui:
+        condition: service_started
+    # --- FIN MODIFICADO ---
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    # --- AÑADIDO ---
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    # --- FIN AÑADIDO ---
 
   # === SNIPPET SERVICE ===
   snippet-service-db:
@@ -146,6 +195,13 @@ services:
     networks:
       - dev-network
     restart: unless-stopped
+    # --- AÑADIDO ---
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER_SNIPPET} -d ${POSTGRES_DB_SNIPPET}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # --- FIN AÑADIDO ---
 
   snippet-service-api:
     container_name: snippet-service-api-dev
@@ -154,7 +210,6 @@ services:
       - "8002:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
-
       SPRING_DATASOURCE_URL: jdbc:postgresql://snippet-service-db:5432/${POSTGRES_DB_SNIPPET}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
@@ -163,31 +218,41 @@ services:
       POSTGRES_DB_SNIPPET: ${POSTGRES_DB_SNIPPET}
       POSTGRES_USER_SNIPPET: ${POSTGRES_USER_SNIPPET}
       POSTGRES_PASSWORD_SNIPPET: ${POSTGRES_PASSWORD_SNIPPET}
-
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-
       SNIPPET_SERVICE_M2M_CLIENT_ID: ${SNIPPET_SERVICE_M2M_CLIENT_ID}
       SNIPPET_SERVICE_M2M_CLIENT_SECRET: ${SNIPPET_SERVICE_M2M_CLIENT_SECRET}
       AUTH0_M2M_SCOPE: ${AUTH0_M2M_SCOPE}
-
       PRINTSCRIPT_SERVICE_URL: ${PRINTSCRIPT_SERVICE_URL}
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
-
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
-
+    # --- MODIFICADO ---
     depends_on:
-      - snippet-service-db
-      - printscript-service-api
-      - authorization-service-api
-      - asset-service-api
-      - redis-bus
+      snippet-service-db:
+        condition: service_healthy
+      printscript-service-api:
+        condition: service_healthy
+      authorization-service-api:
+        condition: service_healthy
+      asset-service-api:
+        condition: service_healthy
+      redis-bus:
+        condition: service_healthy
+    # --- FIN MODIFICADO ---
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    # --- AÑADIDO ---
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    # --- FIN AÑADIDO ---
 
   # === ASSET SERVICE ===
   asset-service-api:
@@ -199,10 +264,22 @@ services:
       NEW_RELIC_AGENT_ENABLED: false
     networks:
       - dev-network
+    # --- MODIFICADO ---
     depends_on:
-      - azurite
+      azurite:
+        condition: service_healthy
+    # --- FIN MODIFICADO ---
     restart: unless-stopped
     logging: *logging_defaults
+    # --- AÑADIDO ---
+    # Asumimos que tiene un endpoint en / (o /health). Si falla, ajustar el path.
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/ || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # --- FIN AÑADIDO ---
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite
@@ -218,6 +295,14 @@ services:
     networks:
       - dev-network
     logging: *logging_defaults
+    # --- AÑADIDO ---
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://127.0.0.1:10000/devstoreaccount1?comp=list" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    # --- FIN AÑADIDO ---
 
   redis-bus:
     image: redis:6-alpine
@@ -228,6 +313,13 @@ services:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    # --- AÑADIDO ---
+    healthcheck:
+      test: [ "CMD", "redis-cli", "PING" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    # --- FIN AÑADIDO ---
 
 volumes:
   printscript_data_dev:
