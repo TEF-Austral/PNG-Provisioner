@@ -11,11 +11,16 @@ services:
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/letsencrypt/:ro
     depends_on:
-      - printscript-service-api
-      - authorization-service-api
-      - asset-service-api
-      - printscript-ui
-      - snippet-service-api
+      printscript-service-api:
+        condition: service_started
+      authorization-service-api:
+        condition: service_started
+      asset-service-api:
+        condition: service_started
+      printscript-ui:
+        condition: service_started
+      snippet-service-api:
+        condition: service_started
     networks:
       - dev-network
     logging:
@@ -85,11 +90,16 @@ services:
       DB_USER: ${POSTGRES_USER_PRINTSCRIPT}
       DB_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
     depends_on:
-      - printscript-db
-      - printscript-ui
-      - authorization-service-api
-      - redis-bus
-      - asset-service-api
+      printscript-db:
+        condition: service_started
+      printscript-ui:
+        condition: service_started
+      authorization-service-api:
+        condition: service_started
+      redis-bus:
+        condition: service_healthy
+      asset-service-api:
+        condition: service_started
     networks:
       - dev-network
     restart: unless-stopped
@@ -126,8 +136,10 @@ services:
       AUTH0_MGMT_CLIENT_ID: ${AUTH0_MGMT_CLIENT_ID}
       AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
     depends_on:
-      - authorization-db
-      - printscript-ui
+      authorization-db:
+        condition: service_started
+      printscript-ui:
+        condition: service_started
     networks:
       - dev-network
     restart: unless-stopped
@@ -179,11 +191,16 @@ services:
       REDIS_PORT: 6379
 
     depends_on:
-      - snippet-service-db
-      - printscript-service-api
-      - authorization-service-api
-      - asset-service-api
-      - redis-bus
+      snippet-service-db:
+        condition: service_started
+      printscript-service-api:
+        condition: service_started
+      authorization-service-api:
+        condition: service_started
+      asset-service-api:
+        condition: service_started
+      redis-bus:
+        condition: service_healthy
     networks:
       - dev-network
     restart: unless-stopped
@@ -200,7 +217,8 @@ services:
     networks:
       - dev-network
     depends_on:
-      - azurite
+      azurite:
+        condition: service_started
     restart: unless-stopped
     logging: *logging_defaults
 
@@ -231,7 +249,7 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 1s
       timeout: 3s
       retries: 30
