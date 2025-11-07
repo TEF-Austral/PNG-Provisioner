@@ -10,17 +10,20 @@ services:
       - ./nginx/conf/app.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/letsencrypt/:ro
+    # --- MODIFICADO ---
+    # Espera a que las APIs estén 'started' (no 'healthy')
     depends_on:
       printscript-service-api:
-        condition: service_healthy
+        condition: service_started
       authorization-service-api:
-        condition: service_healthy
+        condition: service_started
       asset-service-api:
-        condition: service_healthy
+        condition: service_started
       snippet-service-api:
-        condition: service_healthy
+        condition: service_started
       printscript-ui:
         condition: service_started
+    # --- FIN MODIFICADO ---
     networks:
       - dev-network
     logging:
@@ -68,11 +71,13 @@ services:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    # --- MANTENEMOS ESTE HEALTHCHECK ---
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_PRINTSCRIPT} -d ${POSTGRES_DB_PRINTSCRIPT}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    # --- FIN ---
 
   printscript-service-api:
     container_name: printscript-service-api-dev
@@ -93,27 +98,22 @@ services:
       DB_NAME: ${POSTGRES_DB_PRINTSCRIPT}
       DB_USER: ${POSTGRES_USER_PRINTSCRIPT}
       DB_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
+    # --- MODIFICADO ---
     depends_on:
       printscript-db:
-        condition: service_healthy
+        condition: service_healthy # <-- Espera a la DB
       authorization-service-api:
-        condition: service_healthy
+        condition: service_started
       redis-bus:
-        condition: service_healthy
+        condition: service_healthy # <-- Espera a Redis
       asset-service-api:
-        condition: service_healthy
+        condition: service_started
+    # --- FIN MODIFICADO ---
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
-    # --- MODIFICADO (curl -> nc) ---
-    healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    # --- FIN MODIFICADO ---
+    # --- HEALTHCHECK ELIMINADO ---
 
   # === AUTHORIZATION SERVICE ===
   authorization-db:
@@ -129,11 +129,13 @@ services:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    # --- MANTENEMOS ESTE HEALTHCHECK ---
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_AUTHORIZATION} -d ${POSTGRES_DB_AUTHORIZATION}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    # --- FIN ---
 
   authorization-service-api:
     container_name: authorization-service-api-dev
@@ -150,23 +152,18 @@ services:
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
       AUTH0_MGMT_CLIENT_ID: ${AUTH0_MGMT_CLIENT_ID}
       AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
+    # --- MODIFICADO ---
     depends_on:
       authorization-db:
-        condition: service_healthy
+        condition: service_healthy # <-- Espera a la DB
       printscript-ui:
         condition: service_started
+    # --- FIN MODIFICADO ---
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
-    # --- MODIFICADO (curl -> nc) ---
-    healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    # --- FIN MODIFICADO ---
+    # --- HEALTHCHECK ELIMINADO ---
 
   # === SNIPPET SERVICE ===
   snippet-service-db:
@@ -181,11 +178,13 @@ services:
     networks:
       - dev-network
     restart: unless-stopped
+    # --- MANTENEMOS ESTE HEALTHCHECK ---
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_SNIPPET} -d ${POSTGRES_DB_SNIPPET}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    # --- FIN ---
 
   snippet-service-api:
     container_name: snippet-service-api-dev
@@ -212,29 +211,24 @@ services:
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
+    # --- MODIFICADO ---
     depends_on:
       snippet-service-db:
-        condition: service_healthy
+        condition: service_healthy # <-- Espera a la DB
       printscript-service-api:
-        condition: service_healthy
+        condition: service_started
       authorization-service-api:
-        condition: service_healthy
+        condition: service_started
       asset-service-api:
-        condition: service_healthy
+        condition: service_started
       redis-bus:
-        condition: service_healthy
+        condition: service_healthy # <-- Espera a Redis
+    # --- FIN MODIFICADO ---
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
-    # --- MODIFICADO (curl -> nc) ---
-    healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    # --- FIN MODIFICADO ---
+    # --- HEALTHCHECK ELIMINADO ---
 
   # === ASSET SERVICE ===
   asset-service-api:
@@ -246,19 +240,14 @@ services:
       NEW_RELIC_AGENT_ENABLED: false
     networks:
       - dev-network
+    # --- MODIFICADO ---
     depends_on:
       azurite:
-        condition: service_started
+        condition: service_started # <-- Solo espera a que inicie
+    # --- FIN MODIFICADO ---
     restart: unless-stopped
     logging: *logging_defaults
-    # --- MODIFICADO (aumentado start_period) ---
-    healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s # <-- Aumentado a 20s para dar tiempo a Azurite
-    # --- FIN MODIFICADO ---
+    # --- HEALTHCHECK ELIMINADO ---
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite
@@ -274,7 +263,7 @@ services:
     networks:
       - dev-network
     logging: *logging_defaults
-    # (Sin healthcheck, como en la versión anterior)
+    # --- HEALTHCHECK ELIMINADO ---
 
   redis-bus:
     image: redis:6-alpine
@@ -285,11 +274,13 @@ services:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
+    # --- MANTENEMOS ESTE HEALTHCHECK ---
     healthcheck:
       test: ["CMD", "redis-cli", "PING"]
       interval: 5s
       timeout: 3s
       retries: 5
+    # --- FIN ---
 
 volumes:
   printscript_data_dev:
