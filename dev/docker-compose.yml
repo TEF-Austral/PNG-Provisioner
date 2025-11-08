@@ -89,14 +89,6 @@ services:
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
-
-      # --- INICIO DE LA SOLUCIÓN ---
-      # Habilita el pool de Lettuce y la validación de conexiones para evitar timeouts
-      SPRING_DATA_REDIS_LETTUCE_POOL_ENABLED: true
-      SPRING_DATA_REDIS_LETTUCE_POOL_TEST_ON_BORROW: true
-      SPRING_DATA_REDIS_LETTUCE_POOL_MIN_IDLE: 1
-      # --- FIN DE LA SOLUCIÓN ---
-
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
       DB_HOST: printscript-db
       DB_PORT: 5432
@@ -208,13 +200,6 @@ services:
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
 
-      # --- INICIO DE LA SOLUCIÓN ---
-      # Habilita el pool de Lettuce y la validación de conexiones para evitar timeouts
-      SPRING_DATA_REDIS_LETTUCE_POOL_ENABLED: true
-      SPRING_DATA_REDIS_LETTUCE_POOL_TEST_ON_BORROW: true
-      SPRING_DATA_REDIS_LETTUCE_POOL_MIN_IDLE: 1
-      # --- FIN DE LA SOLUCIÓN ---
-
     depends_on:
       snippet-service-db:
         condition: service_started
@@ -290,3 +275,6 @@ volumes:
 networks:
   dev-network:
     driver: bridge
+
+
+
