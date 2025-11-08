@@ -89,16 +89,6 @@ services:
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
-
-      # --- INICIO DE LA SOLUCIÓN (EFICIENTE) ---
-      # Habilita el pool y valida conexiones *inactivas* para evitar timeouts y 100% CPU
-      SPRING_DATA_REDIS_LETTUCE_POOL_ENABLED: true
-      SPRING_DATA_REDIS_LETTUCE_POOL_MIN_IDLE: 1
-      SPRING_DATA_REDIS_LETTUCE_POOL_TEST_WHILE_IDLE: true
-      SPRING_DATA_REDIS_LETTUCE_POOL_TIME_BETWEEN_EVICTION_RUNS: "30s"
-      SPRING_DATA_REDIS_LETTUCE_POOL_MIN_EVICTABLE_IDLE_TIME: "60s"
-      # --- FIN DE LA SOLUCIÓN ---
-
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
       DB_HOST: printscript-db
       DB_PORT: 5432
@@ -210,15 +200,6 @@ services:
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
 
-      # --- INICIO DE LA SOLUCIÓN (EFICIENTE) ---
-      # Habilita el pool y valida conexiones *inactivas* para evitar timeouts y 100% CPU
-      SPRING_DATA_REDIS_LETTUCE_POOL_ENABLED: true
-      SPRING_DATA_REDIS_LETTUCE_POOL_MIN_IDLE: 1
-      SPRING_DATA_REDIS_LETTUCE_POOL_TEST_WHILE_IDLE: true
-      SPRING_DATA_REDIS_LETTUCE_POOL_TIME_BETWEEN_EVICTION_RUNS: "30s"
-      SPRING_DATA_REDIS_LETTUCE_POOL_MIN_EVICTABLE_IDLE_TIME: "60s"
-      # --- FIN DE LA SOLUCIÓN ---
-
     depends_on:
       snippet-service-db:
         condition: service_started
@@ -294,3 +275,6 @@ volumes:
 networks:
   dev-network:
     driver: bridge
+
+
+
