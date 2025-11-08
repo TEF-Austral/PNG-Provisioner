@@ -90,11 +90,13 @@ services:
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
 
-      # --- INICIO DE LA SOLUCIÓN ---
-      # Habilita el pool de Lettuce y la validación de conexiones para evitar timeouts
+      # --- INICIO DE LA SOLUCIÓN (EFICIENTE) ---
+      # Habilita el pool y valida conexiones *inactivas* para evitar timeouts y 100% CPU
       SPRING_DATA_REDIS_LETTUCE_POOL_ENABLED: true
-      SPRING_DATA_REDIS_LETTUCE_POOL_TEST_ON_BORROW: true
       SPRING_DATA_REDIS_LETTUCE_POOL_MIN_IDLE: 1
+      SPRING_DATA_REDIS_LETTUCE_POOL_TEST_WHILE_IDLE: true
+      SPRING_DATA_REDIS_LETTUCE_POOL_TIME_BETWEEN_EVICTION_RUNS: "30s"
+      SPRING_DATA_REDIS_LETTUCE_POOL_MIN_EVICTABLE_IDLE_TIME: "60s"
       # --- FIN DE LA SOLUCIÓN ---
 
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
@@ -188,105 +190,4 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
       DB_HOST: snippet-service-db
-      DB_PORT: 5432
-      POSTGRES_DB_SNIPPET: ${POSTGRES_DB_SNIPPET}
-      POSTGRES_USER_SNIPPET: ${POSTGRES_USER_SNIPPET}
-      POSTGRES_PASSWORD_SNIPPET: ${POSTGRES_PASSWORD_SNIPPET}
-
-      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-
-      SNIPPET_SERVICE_M2M_CLIENT_ID: ${SNIPPET_SERVICE_M2M_CLIENT_ID}
-      SNIPPET_SERVICE_M2M_CLIENT_SECRET: ${SNIPPET_SERVICE_M2M_CLIENT_SECRET}
-      AUTH0_M2M_SCOPE: ${AUTH0_M2M_SCOPE}
-      AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
-
-      PRINTSCRIPT_SERVICE_URL: ${PRINTSCRIPT_SERVICE_URL}
-      AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
-      ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
-
-      REDIS_HOST: redis-bus
-      REDIS_PORT: 6379
-
-      # --- INICIO DE LA SOLUCIÓN ---
-      # Habilita el pool de Lettuce y la validación de conexiones para evitar timeouts
-      SPRING_DATA_REDIS_LETTUCE_POOL_ENABLED: true
-      SPRING_DATA_REDIS_LETTUCE_POOL_TEST_ON_BORROW: true
-      SPRING_DATA_REDIS_LETTUCE_POOL_MIN_IDLE: 1
-      # --- FIN DE LA SOLUCIÓN ---
-
-    depends_on:
-      snippet-service-db:
-        condition: service_started
-      printscript-service-api:
-        condition: service_started
-      authorization-service-api:
-        condition: service_started
-      asset-service-api:
-        condition: service_started
-      redis-bus:
-        condition: service_healthy
-    networks:
-      - dev-network
-    restart: unless-stopped
-    logging: *logging_defaults
-
-  # === ASSET SERVICE ===
-  asset-service-api:
-    container_name: "asset_service_dev"
-    image: ghcr.io/austral-ingsis/snippet-asset-service:latest
-    environment:
-      AZURE_HOST: "http://azurite"
-      NEW_RELIC_APP_NAME: "asset-service"
-      NEW_RELIC_AGENT_ENABLED: false
-    networks:
-      - dev-network
-    depends_on:
-      azurite:
-        condition: service_started
-    restart: unless-stopped
-    logging: *logging_defaults
-
-  azurite:
-    image: mcr.microsoft.com/azure-storage/azurite
-    container_name: "azurite_dev"
-    hostname: azurite
-    restart: always
-    ports:
-      - "10000:10000"
-      - "10001:10001"
-      - "10002:10002"
-    volumes:
-      - blob:/workspace
-    networks:
-      - dev-network
-    logging: *logging_defaults
-
-  redis-bus:
-    image: redis:7-alpine
-    container_name: "redis_bus_dev"
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data_dev:/data
-    networks:
-      - dev-network
-    restart: unless-stopped
-    logging: *logging_defaults
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 1s
-      timeout: 3s
-      retries: 30
-
-volumes:
-  printscript_data_dev:
-  authorization_data_dev:
-  snippet_data_dev:
-  redis_data_dev:
-  blob:
-    external: false
-
-networks:
-  dev-network:
-    driver: bridge
+      DB_PORT: 543
