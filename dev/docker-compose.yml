@@ -52,7 +52,7 @@ services:
     networks:
       - dev-network
     restart: unless-stopped
-    image: ghcr.io/tef-austral/printscript-ui:latest
+    image: ghcr.io/tef-austral/printscript-ui:dev
     logging: &logging_defaults
       driver: "json-file"
       options:
