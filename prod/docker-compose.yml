@@ -30,14 +30,12 @@ services:
       - ./certbot/www/:/var/www/certbot/:rw
       - ./certbot/conf/:/etc/letsencrypt/:rw
 
-  # === PRINTSCRIPT UI ===
   printscript-ui:
     container_name: printscript-ui-prod
     environment:
       VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN}
       VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID}
       VITE_AUDIENCE: ${VITE_AUDIENCE}
-      # Add all the API URLs that the frontend needs
       VITE_BACKEND_URL: "/api/snippet"
       VITE_AUTH0_URL: "/api/authorization"
       VITE_PRINTSCRIPT_URL: "/api/printscript"
@@ -54,7 +52,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # === PrintScript SERVICE ===
   printscript-db:
     image: postgres:16
     container_name: printscript_db_prod
@@ -68,7 +65,6 @@ services:
       - prod-network
     restart: unless-stopped
     logging: *logging_defaults
-
 
   printscript-service-api:
     container_name: printscript-service-api-prod
@@ -93,14 +89,17 @@ services:
       PRINTSCRIPT_M2M_CLIENT_SECRET: ${PRINTSCRIPT_M2M_CLIENT_SECRET}
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
     depends_on:
-      - printscript-db
-      - authorization-service-api
+      printscript-db:
+        condition: service_started
+      authorization-service-api:
+        condition: service_started
+      redis-bus:
+        condition: service_healthy
     networks:
       - prod-network
     restart: unless-stopped
     logging: *logging_defaults
 
-  # === AUTHORIZATION SERVICE ===
   authorization-db:
     image: postgres:16
     container_name: authorization_db_prod
@@ -129,13 +128,13 @@ services:
       AUTH0_MGMT_CLIENT_ID: ${AUTH0_MGMT_CLIENT_ID}
       AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
     depends_on:
-      - authorization-db
+      authorization-db:
+        condition: service_started
     networks:
       - prod-network
     restart: unless-stopped
     logging: *logging_defaults
 
-  # === SNIPPET SERVICE ===
   snippet-service-db:
     image: postgres:16
     container_name: snippet_db_prod
@@ -170,14 +169,15 @@ services:
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
       AUTH0_M2M_SCOPE: ${AUTH0_M2M_SCOPE}
     depends_on:
-      - snippet-service-db
-      - redis-bus
+      snippet-service-db:
+        condition: service_started
+      redis-bus:
+        condition: service_healthy
     networks:
       - prod-network
     restart: unless-stopped
     logging: *logging_defaults
 
-  # === ASSET SERVICE ===
   asset-service-api:
     container_name: "asset_service_prod"
     image: ghcr.io/austral-ingsis/snippet-asset-service:latest
@@ -188,7 +188,8 @@ services:
     networks:
       - prod-network
     depends_on:
-      - azurite
+      azurite:
+        condition: service_started
     restart: unless-stopped
     logging: *logging_defaults
 
@@ -208,19 +209,27 @@ services:
     logging: *logging_defaults
 
   redis-bus:
-    image: redis:6-alpine
+    image: redis:7-alpine
     container_name: "redis_bus_prod"
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data_prod:/data
     networks:
       - prod-network
     restart: unless-stopped
     logging: *logging_defaults
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
 
 volumes:
   printscript_data_prod:
   authorization_data_prod:
   snippet_data_prod:
+  redis_data_prod:
   blob:
     external: false
 
