@@ -48,7 +48,7 @@ services:
       VITE_FRONTEND_URL: "https://printscriptdev.duckdns.org"
       PORT: 5173
     ports:
-      - "5173:5173"
+      - "5173:80"
     networks:
       - dev-network
     restart: unless-stopped
