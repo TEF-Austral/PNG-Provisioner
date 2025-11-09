@@ -42,7 +42,6 @@ services:
       VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN}
       VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID}
       VITE_AUDIENCE: ${VITE_AUDIENCE}
-      # Add all the API URLs that the frontend needs
       VITE_BACKEND_URL: "/api/snippet"
       VITE_AUTH0_URL: "/api/authorization"
       VITE_PRINTSCRIPT_URL: "/api/printscript"
@@ -60,7 +59,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # === PrintScript SERVICE ===
+  # === PRINTSCRIPT SERVICE ===
   printscript-db:
     image: postgres:16
     container_name: printscript_db_dev
@@ -74,7 +73,6 @@ services:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
-
 
   printscript-service-api:
     container_name: printscript-service-api-dev
@@ -98,6 +96,12 @@ services:
       PRINTSCRIPT_M2M_CLIENT_ID: ${PRINTSCRIPT_M2M_CLIENT_ID}
       PRINTSCRIPT_M2M_CLIENT_SECRET: ${PRINTSCRIPT_M2M_CLIENT_SECRET}
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
+      # New Relic Configuration
+      NEW_RELIC_APP_NAME: "PrintScript-Service-Dev"
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      NEW_RELIC_LABELS: "environment:development;service:printscript"
+      NEW_RELIC_LOG_FILE_NAME: "STDOUT"
+      NEW_RELIC_DISTRIBUTED_TRACING_ENABLED: "true"
     depends_on:
       printscript-db:
         condition: service_started
@@ -144,6 +148,12 @@ services:
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
       AUTH0_MGMT_CLIENT_ID: ${AUTH0_MGMT_CLIENT_ID}
       AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
+      # New Relic Configuration
+      NEW_RELIC_APP_NAME: "Authorization-Service-Dev"
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      NEW_RELIC_LABELS: "environment:development;service:authorization"
+      NEW_RELIC_LOG_FILE_NAME: "STDOUT"
+      NEW_RELIC_DISTRIBUTED_TRACING_ENABLED: "true"
     depends_on:
       authorization-db:
         condition: service_started
@@ -175,7 +185,6 @@ services:
       - "8002:8080"
     environment:
       SPRING_PROFILES_ACTIVE: development
-
       SPRING_DATASOURCE_URL: jdbc:postgresql://snippet-service-db:5432/${POSTGRES_DB_SNIPPET}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
@@ -184,22 +193,23 @@ services:
       POSTGRES_DB_SNIPPET: ${POSTGRES_DB_SNIPPET}
       POSTGRES_USER_SNIPPET: ${POSTGRES_USER_SNIPPET}
       POSTGRES_PASSWORD_SNIPPET: ${POSTGRES_PASSWORD_SNIPPET}
-
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-
       SNIPPET_SERVICE_M2M_CLIENT_ID: ${SNIPPET_SERVICE_M2M_CLIENT_ID}
       SNIPPET_SERVICE_M2M_CLIENT_SECRET: ${SNIPPET_SERVICE_M2M_CLIENT_SECRET}
       AUTH0_M2M_SCOPE: ${AUTH0_M2M_SCOPE}
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
-
       PRINTSCRIPT_SERVICE_URL: ${PRINTSCRIPT_SERVICE_URL}
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
-
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
-
+      # New Relic Configuration
+      NEW_RELIC_APP_NAME: "Snippet-Service-Dev"
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      NEW_RELIC_LABELS: "environment:development;service:snippet"
+      NEW_RELIC_LOG_FILE_NAME: "STDOUT"
+      NEW_RELIC_DISTRIBUTED_TRACING_ENABLED: "true"
     depends_on:
       snippet-service-db:
         condition: service_started
@@ -222,8 +232,10 @@ services:
     image: ghcr.io/austral-ingsis/snippet-asset-service:latest
     environment:
       AZURE_HOST: "http://azurite"
-      NEW_RELIC_APP_NAME: "asset-service"
-      NEW_RELIC_AGENT_ENABLED: false
+      NEW_RELIC_APP_NAME: "Asset-Service-Dev"
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      NEW_RELIC_LABELS: "environment:development;service:asset"
+      NEW_RELIC_AGENT_ENABLED: true
     networks:
       - dev-network
     depends_on:
@@ -275,6 +287,3 @@ volumes:
 networks:
   dev-network:
     driver: bridge
-
-
-
