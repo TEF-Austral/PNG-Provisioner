@@ -46,6 +46,7 @@ services:
       VITE_AUTH0_URL: "/api/authorization"
       VITE_PRINTSCRIPT_URL: "/api/printscript"
       VITE_FRONTEND_URL: "https://printscriptdev.duckdns.org"
+      VITE_DOMAIN: ${VITE_DOMAIN}
       PORT: 5173
     ports:
       - "5173:80"
