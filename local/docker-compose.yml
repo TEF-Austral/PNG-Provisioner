@@ -1,0 +1,259 @@
+services:
+  webserver:
+    image: nginx:latest
+    container_name: nginx-proxy-local
+    ports:
+      - "80:80" # Solo exponemos el puerto 80
+    restart: always
+    volumes:
+      # Apuntamos a nuestra nueva config de nginx local
+      - ./nginx/conf/app.conf:/etc/nginx/conf.d/default.conf:ro
+      # Eliminamos las referencias a certbot
+    depends_on:
+      printscript-service-api:
+        condition: service_started
+      authorization-service-api:
+        condition: service_started
+      asset-service-api:
+        condition: service_started
+      printscript-ui:
+        condition: service_started
+      snippet-service-api:
+        condition: service_started
+    networks:
+      - dev-network # Podemos reusar la red de dev o renombrarla a 'local-network'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # EL SERVICIO 'certbot' SE ELIMINA POR COMPLETO
+
+  # === PRINTSCRIPT UI ===
+  printscript-ui:
+    container_name: printscript-ui-local
+    environment:
+      VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN}
+      VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID}
+      VITE_AUDIENCE: ${VITE_AUDIENCE}
+      VITE_BACKEND_URL: "/api/snippet"
+      VITE_AUTH0_URL: "/api/authorization"
+      VITE_PRINTSCRIPT_URL: "/api/printscript"
+      VITE_FRONTEND_URL: "http://localhost" # Cambiado a localhost
+      VITE_DOMAIN: ${VITE_DOMAIN}
+      PORT: 5173
+    ports:
+      - "5173:80"
+    networks:
+      - dev-network
+    restart: unless-stopped
+    image: ghcr.io/tef-austral/printscript-ui:dev
+    logging: &logging_defaults
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # === PRINTSCRIPT SERVICE ===
+  printscript-db:
+    image: postgres:16
+    container_name: printscript_db_local
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_PRINTSCRIPT}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
+      POSTGRES_DB: ${POSTGRES_DB_PRINTSCRIPT}
+    volumes:
+      - printscript_data_dev:/var/lib/postgresql/data # Puedes cambiar a _local
+    networks:
+      - dev-network
+    restart: unless-stopped
+    logging: *logging_defaults
+
+  printscript-service-api:
+    container_name: printscript-service-api-local
+    image: ghcr.io/tef-austral/printscript-service:dev
+    environment:
+      SPRING_PROFILES_ACTIVE: development
+      SPRING_DATASOURCE_URL: jdbc:postgresql://printscript-db:5432/${POSTGRES_DB_PRINTSCRIPT}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_PRINTSCRIPT}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
+      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
+      REDIS_HOST: redis-bus
+      REDIS_PORT: 6379
+      ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
+      DB_HOST: printscript-db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB_PRINTSCRIPT}
+      DB_USER: ${POSTGRES_USER_PRINTSCRIPT}
+      DB_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
+      PRINTSCRIPT_M2M_CLIENT_ID: ${PRINTSCRIPT_M2M_CLIENT_ID}
+      PRINTSCRIPT_M2M_CLIENT_SECRET: ${PRINTSCRIPT_M2M_CLIENT_SECRET}
+      AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
+      NEW_RELIC_APP_NAME: "PrintScript-Service-Local"
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      NEW_RELIC_LABELS: "environment:local;service:printscript"
+    depends_on:
+      printscript-db:
+        condition: service_started
+      printscript-ui:
+        condition: service_started
+      authorization-service-api:
+        condition: service_started
+      redis-bus:
+        condition: service_healthy
+      asset-service-api:
+        condition: service_started
+    networks:
+      - dev-network
+    restart: unless-stopped
+    logging: *logging_defaults
+
+  # === AUTHORIZATION SERVICE ===
+  authorization-db:
+    image: postgres:16
+    container_name: authorization_db_local
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_AUTHORIZATION}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_AUTHORIZATION}
+      POSTGRES_DB: ${POSTGRES_DB_AUTHORIZATION}
+    volumes:
+      - authorization_data_dev:/var/lib/postgresql/data # Puedes cambiar a _local
+    networks:
+      - dev-network
+    restart: unless-stopped
+    logging: *logging_defaults
+
+  authorization-service-api:
+    container_name: authorization-service-api-local
+    image: ghcr.io/tef-austral/authorization-service:dev
+    ports:
+      - "9090:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: development
+      SPRING_DATASOURCE_URL: jdbc:postgresql://authorization-db:5432/${POSTGRES_DB_AUTHORIZATION}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_AUTHORIZATION}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_AUTHORIZATION}
+      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_MGMT_CLIENT_ID: ${AUTH0_MGMT_CLIENT_ID}
+      AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
+      NEW_RELIC_APP_NAME: "Authorization-Service-Local"
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+    depends_on:
+      authorization-db:
+        condition: service_started
+      printscript-ui:
+        condition: service_started
+    networks:
+      - dev-network
+    restart: unless-stopped
+    logging: *logging_defaults
+
+  # === SNIPPET SERVICE ===
+  snippet-service-db:
+    image: postgres:16
+    container_name: snippet_db_local
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_SNIPPET}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
+      POSTGRES_DB: ${POSTGRES_DB_SNIPPET}
+    volumes:
+      - snippet_data_dev:/var/lib/postgresql/data # Puedes cambiar a _local
+    networks:
+      - dev-network
+    restart: unless-stopped
+
+  snippet-service-api:
+    container_name: snippet-service-api-local
+    image: ghcr.io/tef-austral/snippet-service:dev
+    ports:
+      - "8002:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: development
+      SPRING_DATASOURCE_URL: jdbc:postgresql://snippet-service-db:5432/${POSTGRES_DB_SNIPPET}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
+      # ... (el resto de las variables de entorno)
+      REDIS_HOST: redis-bus
+      REDIS_PORT: 6379
+      NEW_RELIC_APP_NAME: "Snippet-Service-Local"
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+    depends_on:
+      snippet-service-db:
+        condition: service_started
+      printscript-service-api:
+        condition: service_started
+      authorization-service-api:
+        condition: service_started
+      asset-service-api:
+        condition: service_started
+      redis-bus:
+        condition: service_healthy
+    networks:
+      - dev-network
+    restart: unless-stopped
+    logging: *logging_defaults
+
+  # === ASSET SERVICE ===
+  asset-service-api:
+    container_name: "asset_service_local"
+    image: ghcr.io/austral-ingsis/snippet-asset-service:latest
+    environment:
+      AZURE_HOST: "http://azurite"
+      NEW_RELIC_APP_NAME: "Asset-Service-Local"
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+    networks:
+      - dev-network
+    depends_on:
+      azurite:
+        condition: service_started
+    restart: unless-stopped
+    logging: *logging_defaults
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: "azurite_local"
+    hostname: azurite
+    restart: always
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - blob:/workspace
+    networks:
+      - dev-network
+    logging: *logging_defaults
+
+  redis-bus:
+    image: redis:7-alpine
+    container_name: "redis_bus_local"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data # Puedes cambiar a _local
+    networks:
+      - dev-network
+    restart: unless-stopped
+    logging: *logging_defaults
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  printscript_data_dev:
+  authorization_data_dev:
+  snippet_data_dev:
+  redis_data_dev:
+  blob:
+    external: false
+
+networks:
+  dev-network:
+    driver: bridge
