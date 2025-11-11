@@ -41,6 +41,7 @@ services:
       VITE_AUTH0_URL: "/api/authorization"
       VITE_PRINTSCRIPT_URL: "/api/printscript"
       VITE_FRONTEND_URL: "https://printscript.duckdns.org"
+      VITE_DOMAIN: ${VITE_DOMAIN}
     ports:
       - "5173:80"
     networks:
@@ -184,6 +185,7 @@ services:
       SNIPPET_SERVICE_M2M_CLIENT_SECRET: ${SNIPPET_SERVICE_M2M_CLIENT_SECRET}
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
       AUTH0_M2M_SCOPE: ${AUTH0_M2M_SCOPE}
+      PRINTSCRIPT_SERVICE_DOMAIN: ${PRINTSCRIPT_SERVICE_DOMAIN}
       # New Relic Configuration
       NEW_RELIC_APP_NAME: "Snippet-Service-Prod"
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
