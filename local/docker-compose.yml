@@ -94,7 +94,6 @@ services:
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
       NEW_RELIC_APP_NAME: "PrintScript-Service-Local"
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
-      NEW_RELIC_LABELS: "environment:local;service:printscript"
     depends_on:
       printscript-db:
         condition: service_started
