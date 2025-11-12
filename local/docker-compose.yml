@@ -8,7 +8,7 @@ services:
     volumes:
       - ./nginx/conf/app.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      printscript-service-api:
+      language-service-api:
         condition: service_started
       authorization-service-api:
         condition: service_started
@@ -35,7 +35,7 @@ services:
       VITE_AUDIENCE: ${VITE_AUDIENCE}
       VITE_BACKEND_URL: "/api/snippet"
       VITE_AUTH0_URL: "/api/authorization"
-      VITE_PRINTSCRIPT_URL: "/api/printscript"
+      VITE_LANGUAGE_URL: "/api/language"
       VITE_FRONTEND_URL: "http://localhost"
       VITE_DOMAIN: ${VITE_DOMAIN}
       PORT: 5173
@@ -50,47 +50,47 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  printscript-db:
+  language-db:
     image: postgres:16
-    container_name: printscript_db_local
+    container_name: language_db_local
     environment:
-      POSTGRES_USER: ${POSTGRES_USER_PRINTSCRIPT}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
-      POSTGRES_DB: ${POSTGRES_DB_PRINTSCRIPT}
+      POSTGRES_USER: ${POSTGRES_USER_LANGUAGE}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_LANGUAGE}
+      POSTGRES_DB: ${POSTGRES_DB_LANGUAGE}
     volumes:
-      - printscript_data_local:/var/lib/postgresql/data
+      - language_data_local:/var/lib/postgresql/data
     networks:
       - local-network
     restart: unless-stopped
     logging: *logging_defaults
 
-  printscript-service-api:
-    container_name: printscript-service-api-local
-    image: ghcr.io/tef-austral/printscript-service:dev
+  language-service-api:
+    container_name: language-service-api-local
+    image: ghcr.io/tef-austral/language-service:dev
     environment:
       SPRING_PROFILES_ACTIVE: development
-      SPRING_DATASOURCE_URL: jdbc:postgresql://printscript-db:5432/${POSTGRES_DB_PRINTSCRIPT}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_PRINTSCRIPT}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://language-db:5432/${POSTGRES_DB_LANGUAGE}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_LANGUAGE}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_LANGUAGE}
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTHORIZATION_SERVICE_URL: http://authorization-service-api:8080
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
       ASSET_SERVICE_URL: http://asset-service-api:8080/v1/asset
-      DB_HOST: printscript-db
+      DB_HOST: language-db
       DB_PORT: 5432
-      DB_NAME: ${POSTGRES_DB_PRINTSCRIPT}
-      DB_USER: ${POSTGRES_USER_PRINTSCRIPT}
-      DB_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
-      PRINTSCRIPT_M2M_CLIENT_ID: ${PRINTSCRIPT_M2M_CLIENT_ID}
-      PRINTSCRIPT_M2M_CLIENT_SECRET: ${PRINTSCRIPT_M2M_CLIENT_SECRET}
+      DB_NAME: ${POSTGRES_DB_LANGUAGE}
+      DB_USER: ${POSTGRES_USER_LANGUAGE}
+      DB_PASSWORD: ${POSTGRES_PASSWORD_LANGUAGE}
+      LANGUAGE_M2M_CLIENT_ID: ${LANGUAGE_M2M_CLIENT_ID}
+      LANGUAGE_M2M_CLIENT_SECRET: ${LANGUAGE_M2M_CLIENT_SECRET}
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
-      NEW_RELIC_APP_NAME: "PrintScript-Service-Local"
+      NEW_RELIC_APP_NAME: "Language-Service-Local"
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       NEW_RELIC_DISTRIBUTED_TRACING_ENABLED: "true"
     depends_on:
-      printscript-db:
+      language-db:
         condition: service_started
       authorization-service-api:
         condition: service_started
@@ -172,7 +172,7 @@ services:
       SNIPPET_SERVICE_M2M_CLIENT_ID: ${SNIPPET_SERVICE_M2M_CLIENT_ID}
       SNIPPET_SERVICE_M2M_CLIENT_SECRET: ${SNIPPET_SERVICE_M2M_CLIENT_SECRET}
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
-      PRINTSCRIPT_SERVICE_URL: http://printscript-service-api:8080
+      LANGUAGE_SERVICE_URL: http://language-service-api:8080
       AUTHORIZATION_SERVICE_URL: http://authorization-service-api:8080
       ASSET_SERVICE_URL: http://asset-service-api:8080/v1/asset
       REDIS_HOST: redis-bus
@@ -183,7 +183,7 @@ services:
     depends_on:
       snippet-service-db:
         condition: service_started
-      printscript-service-api:
+      language-service-api:
         condition: service_started
       authorization-service-api:
         condition: service_started
@@ -246,7 +246,7 @@ services:
       retries: 30
 
 volumes:
-  printscript_data_local:
+  language_data_local:
   authorization_data_local:
   snippet_data_local:
   redis_data_local:

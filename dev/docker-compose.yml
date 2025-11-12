@@ -11,7 +11,7 @@ services:
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/letsencrypt/:ro
     depends_on:
-      printscript-service-api:
+      language-service-api:
         condition: service_started
       authorization-service-api:
         condition: service_started
@@ -35,7 +35,6 @@ services:
       - ./certbot/www/:/var/www/certbot/:rw
       - ./certbot/conf/:/etc/letsencrypt/:rw
 
-  # === PRINTSCRIPT UI ===
   printscript-ui:
     container_name: printscript-ui-dev
     environment:
@@ -44,7 +43,7 @@ services:
       VITE_AUDIENCE: ${VITE_AUDIENCE}
       VITE_BACKEND_URL: "/api/snippet"
       VITE_AUTH0_URL: "/api/authorization"
-      VITE_PRINTSCRIPT_URL: "/api/printscript"
+      VITE_LANGUAGE_URL: "/api/language"
       VITE_FRONTEND_URL: "https://printscriptdev.duckdns.org"
       VITE_DOMAIN: ${VITE_DOMAIN}
       PORT: 5173
@@ -60,48 +59,47 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # === PRINTSCRIPT SERVICE ===
-  printscript-db:
+  language-db:
     image: postgres:16
-    container_name: printscript_db_dev
+    container_name: language_db_dev
     environment:
-      POSTGRES_USER: ${POSTGRES_USER_PRINTSCRIPT}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
-      POSTGRES_DB: ${POSTGRES_DB_PRINTSCRIPT}
+      POSTGRES_USER: ${POSTGRES_USER_LANGUAGE}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_LANGUAGE}
+      POSTGRES_DB: ${POSTGRES_DB_LANGUAGE}
     volumes:
-      - printscript_data_dev:/var/lib/postgresql/data
+      - language_data_dev:/var/lib/postgresql/data
     networks:
       - dev-network
     restart: unless-stopped
     logging: *logging_defaults
 
-  printscript-service-api:
-    container_name: printscript-service-api-dev
-    image: ghcr.io/tef-austral/printscript-service:dev
+  language-service-api:
+    container_name: language-service-api-dev
+    image: ghcr.io/tef-austral/language-service:dev
     environment:
       SPRING_PROFILES_ACTIVE: development
-      SPRING_DATASOURCE_URL: jdbc:postgresql://printscript-db:5432/${POSTGRES_DB_PRINTSCRIPT}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_PRINTSCRIPT}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://language-db:5432/${POSTGRES_DB_LANGUAGE}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_LANGUAGE}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_LANGUAGE}
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
-      DB_HOST: printscript-db
+      DB_HOST: language-db
       DB_PORT: 5432
-      DB_NAME: ${POSTGRES_DB_PRINTSCRIPT}
-      DB_USER: ${POSTGRES_USER_PRINTSCRIPT}
-      DB_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
-      PRINTSCRIPT_M2M_CLIENT_ID: ${PRINTSCRIPT_M2M_CLIENT_ID}
-      PRINTSCRIPT_M2M_CLIENT_SECRET: ${PRINTSCRIPT_M2M_CLIENT_SECRET}
+      DB_NAME: ${POSTGRES_DB_LANGUAGE}
+      DB_USER: ${POSTGRES_USER_LANGUAGE}
+      DB_PASSWORD: ${POSTGRES_PASSWORD_LANGUAGE}
+      LANGUAGE_M2M_CLIENT_ID: ${LANGUAGE_M2M_CLIENT_ID}
+      LANGUAGE_M2M_CLIENT_SECRET: ${LANGUAGE_M2M_CLIENT_SECRET}
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
-      NEW_RELIC_APP_NAME: "PrintScript-Service-Dev"
+      NEW_RELIC_APP_NAME: "Language-Service-Dev"
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       NEW_RELIC_DISTRIBUTED_TRACING_ENABLED: "true"
     depends_on:
-      printscript-db:
+      language-db:
         condition: service_started
       printscript-ui:
         condition: service_started
@@ -116,7 +114,6 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
-  # === AUTHORIZATION SERVICE ===
   authorization-db:
     image: postgres:16
     container_name: authorization_db_dev
@@ -159,7 +156,6 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
-  # === SNIPPET SERVICE ===
   snippet-service-db:
     image: postgres:16
     container_name: snippet_db_dev
@@ -194,10 +190,10 @@ services:
       SNIPPET_SERVICE_M2M_CLIENT_SECRET: ${SNIPPET_SERVICE_M2M_CLIENT_SECRET}
       AUTH0_M2M_SCOPE: ${AUTH0_M2M_SCOPE}
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
-      PRINTSCRIPT_SERVICE_URL: ${PRINTSCRIPT_SERVICE_URL}
+      LANGUAGE_SERVICE_URL: ${LANGUAGE_SERVICE_URL}
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
-      PRINTSCRIPT_SERVICE_DOMAIN: ${PRINTSCRIPT_SERVICE_DOMAIN}
+      LANGUAGE_SERVICE_DOMAIN: ${LANGUAGE_SERVICE_DOMAIN}
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
       NEW_RELIC_APP_NAME: "Snippet-Service-Dev"
@@ -206,7 +202,7 @@ services:
     depends_on:
       snippet-service-db:
         condition: service_started
-      printscript-service-api:
+      language-service-api:
         condition: service_started
       authorization-service-api:
         condition: service_started
@@ -219,7 +215,6 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
-  # === ASSET SERVICE ===
   asset-service-api:
     container_name: "asset_service_dev"
     image: ghcr.io/austral-ingsis/snippet-asset-service:latest
@@ -269,7 +264,7 @@ services:
       retries: 30
 
 volumes:
-  printscript_data_dev:
+  language_data_dev:
   authorization_data_dev:
   snippet_data_dev:
   redis_data_dev:
