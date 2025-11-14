@@ -11,7 +11,7 @@ services:
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/letsencrypt/:ro
     depends_on:
-      - printscript-service-api
+      - language-service-api
       - authorization-service-api
       - asset-service-api
       - printscript-ui
@@ -39,7 +39,7 @@ services:
       VITE_AUDIENCE: ${VITE_AUDIENCE}
       VITE_BACKEND_URL: "/api/snippet"
       VITE_AUTH0_URL: "/api/authorization"
-      VITE_PRINTSCRIPT_URL: "/api/printscript"
+      VITE_PRINTSCRIPT_URL: "/api/language"
       VITE_FRONTEND_URL: "https://printscript.duckdns.org"
       VITE_DOMAIN: ${VITE_DOMAIN}
     ports:
@@ -54,10 +54,10 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # === PRINTSCRIPT SERVICE ===
-  printscript-db:
+  # === LANGUAGE SERVICE ===
+  language-db:
     image: postgres:16
-    container_name: printscript_db_prod
+    container_name: language_db_prod
     environment:
       POSTGRES_USER: ${POSTGRES_USER_PRINTSCRIPT}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
@@ -69,9 +69,9 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
-  printscript-service-api:
-    container_name: printscript-service-api-prod
-    image: ghcr.io/tef-austral/printscript-service:latest
+  language-service-api:
+    container_name: language-service-api-prod
+    image: ghcr.io/tef-austral/language-service:latest
     environment:
       SPRING_PROFILES_ACTIVE: production
       SPRING_DATASOURCE_URL: jdbc:postgresql://printscript-db:5432/${POSTGRES_DB_PRINTSCRIPT}
@@ -83,7 +83,7 @@ services:
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
-      DB_HOST: printscript-db
+      DB_HOST: language-db
       DB_PORT: 5432
       DB_NAME: ${POSTGRES_DB_PRINTSCRIPT}
       DB_USER: ${POSTGRES_USER_PRINTSCRIPT}
@@ -91,14 +91,11 @@ services:
       PRINTSCRIPT_M2M_CLIENT_ID: ${PRINTSCRIPT_M2M_CLIENT_ID}
       PRINTSCRIPT_M2M_CLIENT_SECRET: ${PRINTSCRIPT_M2M_CLIENT_SECRET}
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
-      # New Relic Configuration
-      NEW_RELIC_APP_NAME: "PrintScript-Service-Prod"
+      NEW_RELIC_APP_NAME: "language-Service-Prod"
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
-      NEW_RELIC_LABELS: "environment:production;service:printscript"
-      NEW_RELIC_LOG_FILE_NAME: "STDOUT"
       NEW_RELIC_DISTRIBUTED_TRACING_ENABLED: "true"
     depends_on:
-      printscript-db:
+      language-db:
         condition: service_started
       authorization-service-api:
         condition: service_started
@@ -137,11 +134,8 @@ services:
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
       AUTH0_MGMT_CLIENT_ID: ${AUTH0_MGMT_CLIENT_ID}
       AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
-      # New Relic Configuration
       NEW_RELIC_APP_NAME: "Authorization-Service-Prod"
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
-      NEW_RELIC_LABELS: "environment:production;service:authorization"
-      NEW_RELIC_LOG_FILE_NAME: "STDOUT"
       NEW_RELIC_DISTRIBUTED_TRACING_ENABLED: "true"
     depends_on:
       authorization-db:
@@ -186,11 +180,8 @@ services:
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
       AUTH0_M2M_SCOPE: ${AUTH0_M2M_SCOPE}
       PRINTSCRIPT_SERVICE_DOMAIN: ${PRINTSCRIPT_SERVICE_DOMAIN}
-      # New Relic Configuration
       NEW_RELIC_APP_NAME: "Snippet-Service-Prod"
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
-      NEW_RELIC_LABELS: "environment:production;service:snippet"
-      NEW_RELIC_LOG_FILE_NAME: "STDOUT"
       NEW_RELIC_DISTRIBUTED_TRACING_ENABLED: "true"
     depends_on:
       snippet-service-db:
@@ -210,8 +201,7 @@ services:
       AZURE_HOST: "http://azurite"
       NEW_RELIC_APP_NAME: "Asset-Service-Prod"
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
-      NEW_RELIC_LABELS: "environment:production;service:asset"
-      NEW_RELIC_AGENT_ENABLED: true
+      NEW_RELIC_AGENT_ENABLED: "true"
     networks:
       - prod-network
     depends_on:
