@@ -74,7 +74,7 @@ services:
     image: ghcr.io/tef-austral/language-service:latest
     environment:
       SPRING_PROFILES_ACTIVE: production
-      SPRING_DATASOURCE_URL: jdbc:postgresql://printscript-db:5432/${POSTGRES_DB_PRINTSCRIPT}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://language-db:5432/${POSTGRES_DB_PRINTSCRIPT}  # ✅ This line
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_PRINTSCRIPT}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
