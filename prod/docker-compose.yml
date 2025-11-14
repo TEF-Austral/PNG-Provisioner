@@ -83,7 +83,7 @@ services:
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
-      DB_HOST: printscript-db
+      DB_HOST: language-db
       DB_PORT: 5432
       DB_NAME: ${POSTGRES_DB_PRINTSCRIPT}
       DB_USER: ${POSTGRES_USER_PRINTSCRIPT}
