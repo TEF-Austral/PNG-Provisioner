@@ -30,6 +30,7 @@ services:
       - ./certbot/www/:/var/www/certbot/:rw
       - ./certbot/conf/:/etc/letsencrypt/:rw
 
+  # === PRINTSCRIPT UI ===
   printscript-ui:
     container_name: printscript-ui-prod
     environment:
@@ -38,7 +39,7 @@ services:
       VITE_AUDIENCE: ${VITE_AUDIENCE}
       VITE_BACKEND_URL: "/api/snippet"
       VITE_AUTH0_URL: "/api/authorization"
-      VITE_LANGUAGE_URL: "/api/language"
+      VITE_PRINTSCRIPT_URL: "/api/printscript"
       VITE_FRONTEND_URL: "https://printscript.duckdns.org"
       VITE_DOMAIN: ${VITE_DOMAIN}
     ports:
@@ -53,15 +54,16 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # === LANGUAGE SERVICE ===
   language-db:
     image: postgres:16
     container_name: language_db_prod
     environment:
-      POSTGRES_USER: ${POSTGRES_USER_LANGUAGE}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_LANGUAGE}
-      POSTGRES_DB: ${POSTGRES_DB_LANGUAGE}
+      POSTGRES_USER: ${POSTGRES_USER_PRINTSCRIPT}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
+      POSTGRES_DB: ${POSTGRES_DB_PRINTSCRIPT}
     volumes:
-      - language_data_prod:/var/lib/postgresql/data
+      - printscript_data_prod:/var/lib/postgresql/data
     networks:
       - prod-network
     restart: unless-stopped
@@ -72,24 +74,24 @@ services:
     image: ghcr.io/tef-austral/language-service:latest
     environment:
       SPRING_PROFILES_ACTIVE: production
-      SPRING_DATASOURCE_URL: jdbc:postgresql://language-db:5432/${POSTGRES_DB_LANGUAGE}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_LANGUAGE}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_LANGUAGE}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://printscript-db:5432/${POSTGRES_DB_PRINTSCRIPT}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_PRINTSCRIPT}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
       AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
-      DB_HOST: language-db
+      DB_HOST: printscript-db
       DB_PORT: 5432
-      DB_NAME: ${POSTGRES_DB_LANGUAGE}
-      DB_USER: ${POSTGRES_USER_LANGUAGE}
-      DB_PASSWORD: ${POSTGRES_PASSWORD_LANGUAGE}
-      LANGUAGE_M2M_CLIENT_ID: ${LANGUAGE_M2M_CLIENT_ID}
-      LANGUAGE_M2M_CLIENT_SECRET: ${LANGUAGE_M2M_CLIENT_SECRET}
+      DB_NAME: ${POSTGRES_DB_PRINTSCRIPT}
+      DB_USER: ${POSTGRES_USER_PRINTSCRIPT}
+      DB_PASSWORD: ${POSTGRES_PASSWORD_PRINTSCRIPT}
+      PRINTSCRIPT_M2M_CLIENT_ID: ${PRINTSCRIPT_M2M_CLIENT_ID}
+      PRINTSCRIPT_M2M_CLIENT_SECRET: ${PRINTSCRIPT_M2M_CLIENT_SECRET}
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
-      NEW_RELIC_APP_NAME: "Language-Service-Prod"
+      NEW_RELIC_APP_NAME: "language-Service-Prod"
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       NEW_RELIC_DISTRIBUTED_TRACING_ENABLED: "true"
     depends_on:
@@ -104,6 +106,7 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
+  # === AUTHORIZATION SERVICE ===
   authorization-db:
     image: postgres:16
     container_name: authorization_db_prod
@@ -142,6 +145,7 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
+  # === SNIPPET SERVICE ===
   snippet-service-db:
     image: postgres:16
     container_name: snippet_db_prod
@@ -165,7 +169,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER_SNIPPET}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD_SNIPPET}
       ASSET_SERVICE_URL: ${ASSET_SERVICE_URL}
-      LANGUAGE_SERVICE_URL: ${LANGUAGE_SERVICE_URL}
+      PRINTSCRIPT_SERVICE_URL: ${PRINTSCRIPT_SERVICE_URL}
       AUTHORIZATION_SERVICE_URL: ${AUTHORIZATION_SERVICE_URL}
       REDIS_HOST: redis-bus
       REDIS_PORT: 6379
@@ -175,7 +179,7 @@ services:
       SNIPPET_SERVICE_M2M_CLIENT_SECRET: ${SNIPPET_SERVICE_M2M_CLIENT_SECRET}
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
       AUTH0_M2M_SCOPE: ${AUTH0_M2M_SCOPE}
-      LANGUAGE_SERVICE_DOMAIN: ${LANGUAGE_SERVICE_DOMAIN}
+      PRINTSCRIPT_SERVICE_DOMAIN: ${PRINTSCRIPT_SERVICE_DOMAIN}
       NEW_RELIC_APP_NAME: "Snippet-Service-Prod"
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       NEW_RELIC_DISTRIBUTED_TRACING_ENABLED: "true"
@@ -189,6 +193,7 @@ services:
     restart: unless-stopped
     logging: *logging_defaults
 
+  # === ASSET SERVICE ===
   asset-service-api:
     container_name: "asset_service_prod"
     image: ghcr.io/austral-ingsis/snippet-asset-service:latest
@@ -238,7 +243,7 @@ services:
       retries: 30
 
 volumes:
-  language_data_prod:
+  printscript_data_prod:
   authorization_data_prod:
   snippet_data_prod:
   redis_data_prod:
