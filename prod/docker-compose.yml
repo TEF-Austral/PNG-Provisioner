@@ -39,7 +39,7 @@ services:
       VITE_AUDIENCE: ${VITE_AUDIENCE}
       VITE_BACKEND_URL: "/api/snippet"
       VITE_AUTH0_URL: "/api/authorization"
-      VITE_PRINTSCRIPT_URL: "/api/printscript"
+      VITE_PRINTSCRIPT_URL: "/api/language"
       VITE_FRONTEND_URL: "https://printscript.duckdns.org"
       VITE_DOMAIN: ${VITE_DOMAIN}
     ports:
