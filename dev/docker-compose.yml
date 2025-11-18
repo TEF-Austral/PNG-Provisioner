@@ -90,6 +90,7 @@ services:
       PRINTSCRIPT_M2M_CLIENT_SECRET: ${PRINTSCRIPT_M2M_CLIENT_SECRET}
       AUTH0_TOKEN_URI: ${AUTH0_TOKEN_URI}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      NEW_RELIC_ENVIRONMENT: development
     depends_on:
       language-db:
         condition: service_started
@@ -130,6 +131,7 @@ services:
       AUTH0_MGMT_CLIENT_ID: ${AUTH0_MGMT_CLIENT_ID}
       AUTH0_MGMT_CLIENT_SECRET: ${AUTH0_MGMT_CLIENT_SECRET}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      NEW_RELIC_ENVIRONMENT: development
     depends_on:
       authorization-db:
         condition: service_started
@@ -173,6 +175,7 @@ services:
       AUTH0_M2M_SCOPE: ${AUTH0_M2M_SCOPE}
       PRINTSCRIPT_SERVICE_DOMAIN: ${PRINTSCRIPT_SERVICE_DOMAIN}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      NEW_RELIC_ENVIRONMENT: development
     depends_on:
       snippet-service-db:
         condition: service_started
@@ -189,6 +192,7 @@ services:
     environment:
       AZURE_HOST: "http://azurite"
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      NEW_RELIC_ENVIRONMENT: development
     networks:
       - dev-network
     depends_on:
